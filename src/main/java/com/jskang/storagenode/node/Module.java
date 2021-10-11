@@ -1,6 +1,5 @@
-package com.jskang.storagenode.module;
+package com.jskang.storagenode.node;
 
-import com.jskang.storagenode.model.NodeStatus;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
@@ -9,9 +8,9 @@ import java.net.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class Node {
+public class Module {
 
-    List<NodeStatus> nodeStatuses = new ArrayList<>();
+    List<NodeStatusDao> nodeStatusDaos = new ArrayList<>();
 
     /**
      * 서버의 로컬 IP Address 조회
@@ -48,8 +47,8 @@ public class Node {
         totalSize = drives[0].getTotalSpace() / Math.pow(1024, 3);
         useSize = drives[0].getUsableSpace() / Math.pow(1024, 3);
 
-        NodeStatus nodeStatus = new NodeStatus(hostAddress, useSize, totalSize);
-        return ServerResponse.ok().bodyValue(nodeStatus);
+        NodeStatusDao nodeStatusDao = new NodeStatusDao(hostAddress, useSize, totalSize);
+        return ServerResponse.ok().bodyValue(nodeStatusDao);
 
     }
 
@@ -58,12 +57,12 @@ public class Node {
      */
     public void reloadNodeList() {
         System.out.println("노드 갱신");
-        nodeStatuses = nodeStatuses.stream()
-                .map(nodeStatus -> {
+        nodeStatusDaos = nodeStatusDaos.stream()
+                .map(nodeStatusDao -> {
                     //TODO: 모든 호스트 시스템 상태 정보 갱신 (RestAPI 요청)
-                    nodeStatus.setUseSize(new Random().nextDouble());
-                    nodeStatus.setTotalSize(new Random().nextDouble());
-                    return nodeStatus;
+                    nodeStatusDao.setUseSize(new Random().nextDouble());
+                    nodeStatusDao.setTotalSize(new Random().nextDouble());
+                    return nodeStatusDao;
                 })
                 .collect(Collectors.toList());
     }

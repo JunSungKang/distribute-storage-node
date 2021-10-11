@@ -1,6 +1,6 @@
 package com.jskang.storagenode;
 
-import com.jskang.storagenode.module.Node;
+import com.jskang.storagenode.node.Module;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -13,12 +13,12 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 @Component
 public class api {
 
-    static Node node = new Node();
+    static Module module = new Module();
 
     @Bean
     public RouterFunction<ServerResponse> router(){
         return RouterFunctions.route()
-                .GET("node/status", request -> node.getNodeStatus())
+                .GET("node/status", request -> module.getNodeStatus())
                 .build();
     }
 
@@ -27,6 +27,6 @@ public class api {
      */
     @Scheduled(fixedRate = 600000)
     public void nodeReload(){
-        node.reloadNodeList();
+        module.reloadNodeList();
     }
 }

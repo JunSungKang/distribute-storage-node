@@ -1,11 +1,11 @@
-package com.jskang.storagenode.model;
+package com.jskang.storagenode.node;
 
-public class NodeStatus {
+public class NodeStatusDao {
     private String hostAddress;
     private double useSize;
     private double totalSize;
 
-    public NodeStatus(String hostAddress, double useSize, double totalSize) {
+    public NodeStatusDao(String hostAddress, double useSize, double totalSize) {
         this.hostAddress = hostAddress;
         this.useSize = useSize;
         this.totalSize = totalSize;
