@@ -16,17 +16,17 @@ public class api {
     static Module module = new Module();
 
     @Bean
-    public RouterFunction<ServerResponse> router(){
+    public RouterFunction<ServerResponse> router() {
         return RouterFunctions.route()
-                .GET("node/status", request -> module.getNodeStatus())
-                .build();
+            .GET("node/status", request -> module.getNodeStatus())
+            .build();
     }
 
     /**
      * 10분(600초)마다 스토리지 네트워크에 합류한 노드 상태 정보 갱신
      */
     @Scheduled(fixedRate = 600000)
-    public void nodeReload(){
+    public void nodeReload() {
         module.reloadNodeList();
     }
 }

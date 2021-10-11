@@ -1,12 +1,16 @@
 package com.jskang.storagenode.node;
 
+import java.io.File;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
-
-import java.io.File;
-import java.net.*;
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class Module {
 
@@ -14,15 +18,20 @@ public class Module {
 
     /**
      * 서버의 로컬 IP Address 조회
+     *
      * @return IP Address
      */
     private String getLocalIpAddress() {
         try {
-            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
+                en.hasMoreElements(); ) {
                 NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
+                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses();
+                    enumIpAddr.hasMoreElements(); ) {
                     InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress() && inetAddress.isSiteLocalAddress()) {
+                    if (!inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress()
+                        && inetAddress
+                        .isSiteLocalAddress()) {
                         return inetAddress.getHostAddress().toString();
                     }
                 }
@@ -30,11 +39,13 @@ public class Module {
         } catch (SocketException ex) {
             return "";
         }
+
         return "";
     }
 
     /**
      * 현재 자기 자신의 노드 디스크 상태 정보 조회
+     *
      * @return 호스트명, 디스크 현재 사용량, 디스크 전체 사이즈 반환
      */
     public Mono<ServerResponse> getNodeStatus() {
@@ -49,7 +60,6 @@ public class Module {
 
         NodeStatusDao nodeStatusDao = new NodeStatusDao(hostAddress, useSize, totalSize);
         return ServerResponse.ok().bodyValue(nodeStatusDao);
-
     }
 
     /**
@@ -58,12 +68,12 @@ public class Module {
     public void reloadNodeList() {
         System.out.println("노드 갱신");
         nodeStatusDaos = nodeStatusDaos.stream()
-                .map(nodeStatusDao -> {
-                    //TODO: 모든 호스트 시스템 상태 정보 갱신 (RestAPI 요청)
-                    nodeStatusDao.setUseSize(new Random().nextDouble());
-                    nodeStatusDao.setTotalSize(new Random().nextDouble());
-                    return nodeStatusDao;
-                })
-                .collect(Collectors.toList());
+            .map(nodeStatusDao -> {
+                //TODO: 모든 호스트 시스템 상태 정보 갱신 (RestAPI 요청)
+                nodeStatusDao.setUseSize(new Random().nextDouble());
+                nodeStatusDao.setTotalSize(new Random().nextDouble());
+                return nodeStatusDao;
+            })
+            .collect(Collectors.toList());
     }
 }

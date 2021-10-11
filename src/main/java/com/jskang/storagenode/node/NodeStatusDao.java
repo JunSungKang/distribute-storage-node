@@ -1,6 +1,7 @@
 package com.jskang.storagenode.node;
 
 public class NodeStatusDao {
+
     private String hostAddress;
     private double useSize;
     private double totalSize;
@@ -31,7 +32,7 @@ public class NodeStatusDao {
         this.totalSize = totalSize;
     }
 
-    public boolean equalshostAddress(String hostAddress){
+    public boolean equalshostAddress(String hostAddress) {
         return this.hostAddress.equals(hostAddress);
     }
 }
