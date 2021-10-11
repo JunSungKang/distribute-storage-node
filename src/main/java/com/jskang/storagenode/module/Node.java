@@ -1,6 +1,6 @@
-package kr.jskang.storagenode.module;
+package com.jskang.storagenode.module;
 
-import kr.jskang.storagenode.model.NodeStatus;
+import com.jskang.storagenode.model.NodeStatus;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
@@ -35,7 +35,7 @@ public class Node {
     }
 
     /**
-     * 현재 디스크 상태 정보 조회
+     * 현재 자기 자신의 노드 디스크 상태 정보 조회
      * @return 호스트명, 디스크 현재 사용량, 디스크 전체 사이즈 반환
      */
     public Mono<ServerResponse> getNodeStatus() {

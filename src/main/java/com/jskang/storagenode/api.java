@@ -1,6 +1,6 @@
-package kr.jskang.storagenode;
+package com.jskang.storagenode;
 
-import kr.jskang.storagenode.module.Node;
+import com.jskang.storagenode.module.Node;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;

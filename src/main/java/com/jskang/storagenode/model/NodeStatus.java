@@ -1,4 +1,4 @@
-package kr.jskang.storagenode.model;
+package com.jskang.storagenode.model;
 
 public class NodeStatus {
     private String hostAddress;
