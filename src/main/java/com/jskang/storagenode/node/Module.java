@@ -1,5 +1,7 @@
 package com.jskang.storagenode.node;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jskang.storagenode.common.RequestApi;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -14,8 +16,8 @@ import reactor.core.publisher.Mono;
 
 public class Module {
 
-    static List<String> seedNodes = new ArrayList<>();
-    List<NodeStatusDao> nodeStatusDaos = new ArrayList<>();
+    private static List<String> seedNodes = new ArrayList<>();
+    private List<NodeStatusDao> nodeStatusDaos = new ArrayList<>();
 
     /**
      * Server's local IP address lookup
@@ -47,6 +49,19 @@ public class Module {
         return "";
     }
 
+    public static String[] getSeedNodes() {
+        return seedNodes.toArray(String[]::new);
+    }
+
+    /**
+     * Search the list of all registered nodes.
+     *
+     * @return all nodes.
+     */
+    public Mono<ServerResponse> getNodeLists() {
+        return ServerResponse.ok().bodyValue(this.nodeStatusDaos);
+    }
+
     /**
      * Current own node disk status information inquiry
      *
@@ -76,7 +91,7 @@ public class Module {
 
         nodeStatusDaos = nodeStatusDaos.stream()
             .map(nodeStatusDao -> {
-                //TODO: 모든 호스트 시스템 상태 정보 갱신 (RestAPI 요청)
+                //TODO: 모든 호스트 시스템 상태 정보 갱신 및 모든 참가 노드 갱신(RestAPI 요청)
                 nodeStatusDao.setUseSize(new Random().nextDouble());
                 nodeStatusDao.setTotalSize(new Random().nextDouble());
                 return nodeStatusDao;
@@ -93,6 +108,44 @@ public class Module {
             System.out.println("Registered the first Seed Node.");
         } else {
             System.out.println("The first Seed Node already exists.");
+        }
+    }
+
+    /**
+     * Node join request
+     *
+     * @throws Exception
+     */
+    public void networkJoinRequest() throws Exception {
+        String localIp = this.getLocalIpAddress();
+
+        String seedNode = Module.getSeedNodes()[0];
+        String ip = seedNode.split(":")[0];
+        String port = seedNode.split(":")[1];
+        // TODO: 자기 자신이 오픈되는 포트로 자동 선택되도록 변경해야함
+        String url = "http://".concat(ip).concat(":").concat(port).concat("/node/join?ip=")
+            .concat(localIp).concat("&port=20040");
+        new RequestApi().post(url, null, null);
+    }
+
+    /**
+     * Add the node's network participation list
+     *
+     * @param ip   IP of the node to be added
+     * @param port Port of the node to be added
+     * @return if success, node status info. other case exception message.
+     */
+    public Mono<ServerResponse> networkJoin(String ip, int port) {
+        try {
+            RequestApi requestApi = new RequestApi();
+            NodeStatusDao nodeStatusDao = new ObjectMapper()
+                .convertValue(requestApi.get("http://" + ip + ":" + port + "/node/status"),
+                    NodeStatusDao.class);
+            this.nodeStatusDaos.add(nodeStatusDao);
+
+            return ServerResponse.ok().bodyValue(this.nodeStatusDaos);
+        } catch (Exception e) {
+            return ServerResponse.badRequest().bodyValue(e.getMessage());
         }
     }
 }

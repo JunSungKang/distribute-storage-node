@@ -19,17 +19,28 @@ public class Converter {
     }
 
     public static Map jsonToMap(String json) {
-        return mapper.convertValue(json, new TypeReference<Map>() {
-        });
+        try {
+            return mapper.readValue(json, new TypeReference<Map>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e.getMessage());
+        }
     }
 
     public static String listToStringArray(List list) {
-        return mapper.convertValue(list, new TypeReference<String>() {
-        });
+        try {
+            return mapper.writeValueAsString(list);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e.getMessage());
+        }
     }
 
     public static List stringArrayToList(String stringArray) {
-        return mapper.convertValue(stringArray, new TypeReference<List>() {
-        });
+        try {
+            return mapper.readValue(stringArray, new TypeReference<List>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e.getMessage());
+        }
     }
 }

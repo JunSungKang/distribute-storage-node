@@ -18,25 +18,26 @@ public class RequestApi {
         "Content-type", "application/json;charset=UTF-8"
     );
 
-    public Map get(String address, int port, String[] headers) throws Exception {
-        // Exception port range.
-        if (port < 0 || port > 65535) {
-            System.out.println("The port input value range has been exceeded.");
-            return null;
-        }
+    public Object get(String url) throws Exception {
+        return this.get(url, null);
+    }
+
+    public Object get(String url, String[] headers) throws Exception {
 
         // Common headers setting.
-        for (String header : headers) {
-            commonHeaders.add(header);
+        if (headers != null) {
+            for (String header : headers) {
+                commonHeaders.add(header);
+            }
         }
 
         HttpClient client = HttpClient.newBuilder().version(Version.HTTP_1_1).build();
 
         String result = client.sendAsync(
             HttpRequest
-                .newBuilder(new URI(address.concat(":").concat(String.valueOf(port))))
+                .newBuilder(new URI(url))
                 .GET()
-                .headers(headers)
+                .headers(commonHeaders.toArray(String[]::new))
                 .build(),
             HttpResponse
                 .BodyHandlers
@@ -46,34 +47,33 @@ public class RequestApi {
         return Converter.jsonToMap(result);
     }
 
-    public Map post(String address, int port, String[] headers, Map<?, ?> data) throws Exception {
-        // Exception port range.
-        if (port < 0 || port > 65535) {
-            System.out.println("The port input value range has been exceeded.");
-            return null;
-        }
-
+    public Object post(String url, String[] headers, Map<?, ?> data) throws Exception {
         // Common headers setting.
-        for (String header : headers) {
-            commonHeaders.add(header);
+        if (headers != null) {
+            for (String header : headers) {
+                commonHeaders.add(header);
+            }
         }
 
         String requestBody = Converter.mapToJson(data);
+        if (requestBody.equals("null")) {
+            requestBody = "";
+        }
         BodyPublisher body = BodyPublishers.ofString(requestBody);
 
         HttpClient client = HttpClient.newBuilder().version(Version.HTTP_1_1).build();
 
         String result = client.sendAsync(
             HttpRequest
-                .newBuilder(new URI(address.concat(":").concat(String.valueOf(port))))
+                .newBuilder(new URI(url))
                 .POST(body)
-                .headers(headers)
+                .headers(commonHeaders.toArray(String[]::new))
                 .build(),
             HttpResponse
                 .BodyHandlers
                 .ofString()
         ).thenApply(HttpResponse::body).get();
 
-        return Converter.jsonToMap(result);
+        return Converter.stringArrayToList(result);
     }
 }

@@ -18,7 +18,11 @@ public class api {
     @Bean
     public RouterFunction<ServerResponse> router() {
         return RouterFunctions.route()
+            .GET("node/list", request -> module.getNodeLists())
             .GET("node/status", request -> module.getNodeStatus())
+            .POST("node/join", request -> module.networkJoin(
+                request.queryParam("ip").get(), Integer.valueOf(request.queryParam("port").get()))
+            )
             .build();
     }
 
