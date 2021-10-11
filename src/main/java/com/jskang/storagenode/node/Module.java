@@ -14,15 +14,18 @@ import reactor.core.publisher.Mono;
 
 public class Module {
 
+    static List<String> seedNodes = new ArrayList<>();
     List<NodeStatusDao> nodeStatusDaos = new ArrayList<>();
 
     /**
-     * 서버의 로컬 IP Address 조회
+     * Server's local IP address lookup
      *
-     * @return IP Address
+     * @return Returns the IP Address.
      */
     private String getLocalIpAddress() {
         try {
+            System.out.println("Look up the hostname or IP address.");
+
             for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
                 en.hasMoreElements(); ) {
                 NetworkInterface intf = en.nextElement();
@@ -32,11 +35,12 @@ public class Module {
                     if (!inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress()
                         && inetAddress
                         .isSiteLocalAddress()) {
-                        return inetAddress.getHostAddress().toString();
+                        return inetAddress.getHostAddress();
                     }
                 }
             }
         } catch (SocketException ex) {
+            System.out.println("Hostname or IP address lookup failed.");
             return "";
         }
 
@@ -44,11 +48,13 @@ public class Module {
     }
 
     /**
-     * 현재 자기 자신의 노드 디스크 상태 정보 조회
+     * Current own node disk status information inquiry
      *
-     * @return 호스트명, 디스크 현재 사용량, 디스크 전체 사이즈 반환
+     * @return Returns the host name, current disk usage, and total disk size.
      */
     public Mono<ServerResponse> getNodeStatus() {
+        System.out.println("Retrieve node information.");
+
         String hostAddress = "";
         double totalSize = 0;
         double useSize = 0;
@@ -63,10 +69,11 @@ public class Module {
     }
 
     /**
-     * 스토리지 네트워크에 합류된 모든 노드 정보를 최신화
+     * Updating information of all nodes joining the storage network
      */
     public void reloadNodeList() {
-        System.out.println("노드 갱신");
+        System.out.println("Update all node information.");
+
         nodeStatusDaos = nodeStatusDaos.stream()
             .map(nodeStatusDao -> {
                 //TODO: 모든 호스트 시스템 상태 정보 갱신 (RestAPI 요청)
@@ -75,5 +82,17 @@ public class Module {
                 return nodeStatusDao;
             })
             .collect(Collectors.toList());
+    }
+
+    /**
+     * Request to connect to the first Seed Node when running
+     */
+    public static void networkSeedConnect() {
+        if (!seedNodes.contains("127.0.0.1:20040")) {
+            seedNodes.add("127.0.0.1:20040");
+            System.out.println("Registered the first Seed Node.");
+        } else {
+            System.out.println("The first Seed Node already exists.");
+        }
     }
 }
