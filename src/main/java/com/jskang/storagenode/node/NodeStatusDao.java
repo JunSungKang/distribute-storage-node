@@ -5,22 +5,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class NodeStatusDao {
 
-    private String hostAddress;
+    private String hostName;
     private double useSize;
     private double totalSize;
 
     @JsonCreator
     public NodeStatusDao(
-        @JsonProperty("hostAddress") String hostAddress,
+        @JsonProperty("hostAddress") String hostName,
         @JsonProperty("useSize") double useSize,
         @JsonProperty("totalSize") double totalSize) {
-        this.hostAddress = hostAddress;
+        this.hostName = hostName;
         this.useSize = useSize;
         this.totalSize = totalSize;
     }
 
-    public String gethostAddress() {
-        return hostAddress;
+    public String getHostName() {
+        return hostName;
     }
 
     public double getUseSize() {
@@ -39,7 +39,7 @@ public class NodeStatusDao {
         this.totalSize = totalSize;
     }
 
-    public boolean equalshostAddress(String hostAddress) {
-        return this.hostAddress.equals(hostAddress);
+    public boolean isHostName(String hostName) {
+        return this.hostName.equals(hostName);
     }
 }

@@ -1,6 +1,7 @@
 package com.jskang.storagenode.node;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jskang.storagenode.StorageNodeApplication;
 import com.jskang.storagenode.common.RequestApi;
 import java.io.File;
 import java.net.InetAddress;
@@ -11,13 +12,16 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 public class Module {
 
-    private static List<String> seedNodes = new ArrayList<>();
-    private List<NodeStatusDao> nodeStatusDaos = new ArrayList<>();
+    private Logger LOG = LoggerFactory.getLogger(this.getClass());
+
+    private static List<NodeStatusDao> nodeStatusDaos = new ArrayList<>();
 
     /**
      * Server's local IP address lookup
@@ -26,7 +30,7 @@ public class Module {
      */
     private String getLocalIpAddress() {
         try {
-            System.out.println("Look up the hostname or IP address.");
+            LOG.info("Select the hostname or ip address.");
 
             for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
                 en.hasMoreElements(); ) {
@@ -42,15 +46,11 @@ public class Module {
                 }
             }
         } catch (SocketException ex) {
-            System.out.println("Hostname or IP address lookup failed.");
+            LOG.error("Select the hostname or ip address failed.");
             return "";
         }
 
         return "";
-    }
-
-    public static String[] getSeedNodes() {
-        return seedNodes.toArray(String[]::new);
     }
 
     /**
@@ -68,7 +68,7 @@ public class Module {
      * @return Returns the host name, current disk usage, and total disk size.
      */
     public Mono<ServerResponse> getNodeStatus() {
-        System.out.println("Retrieve node information.");
+        LOG.info("Select node information.");
 
         String hostAddress = "";
         double totalSize = 0;
@@ -80,14 +80,18 @@ public class Module {
         useSize = drives[0].getUsableSpace() / Math.pow(1024, 3);
 
         NodeStatusDao nodeStatusDao = new NodeStatusDao(hostAddress, useSize, totalSize);
-        return ServerResponse.ok().bodyValue(nodeStatusDao);
+        if (nodeStatusDao == null) {
+            return ServerResponse.ok().bodyValue(new ArrayList<>());
+        } else {
+            return ServerResponse.ok().bodyValue(nodeStatusDao);
+        }
     }
 
     /**
      * Updating information of all nodes joining the storage network
      */
     public void reloadNodeList() {
-        System.out.println("Update all node information.");
+        LOG.info("Update all node information.");
 
         nodeStatusDaos = nodeStatusDaos.stream()
             .map(nodeStatusDao -> {
@@ -100,18 +104,6 @@ public class Module {
     }
 
     /**
-     * Request to connect to the first Seed Node when running
-     */
-    public static void networkSeedConnect() {
-        if (!seedNodes.contains("127.0.0.1:20040")) {
-            seedNodes.add("127.0.0.1:20040");
-            System.out.println("Registered the first Seed Node.");
-        } else {
-            System.out.println("The first Seed Node already exists.");
-        }
-    }
-
-    /**
      * Node join request
      *
      * @throws Exception
@@ -119,13 +111,12 @@ public class Module {
     public void networkJoinRequest() throws Exception {
         String localIp = this.getLocalIpAddress();
 
-        String seedNode = Module.getSeedNodes()[0];
-        String ip = seedNode.split(":")[0];
-        String port = seedNode.split(":")[1];
-        // TODO: 자기 자신이 오픈되는 포트로 자동 선택되도록 변경해야함
-        String url = "http://".concat(ip).concat(":").concat(port).concat("/node/join?ip=")
-            .concat(localIp).concat("&port=20040");
-        new RequestApi().post(url, null, null);
+        String url = "http://".concat("192.168.55.23").concat(":").concat("20040")
+            .concat("/node/join?ip=")
+            .concat(localIp)
+            .concat("&port=" + StorageNodeApplication.getSettingPort());
+        List<NodeStatusDao> nodeStatusDaos = (List<NodeStatusDao>) new RequestApi().post(url, null, null);
+        this.nodeStatusDaos.addAll(nodeStatusDaos);
     }
 
     /**
