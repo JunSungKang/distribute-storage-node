@@ -10,7 +10,6 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +19,7 @@ import reactor.core.publisher.Mono;
 public class Module {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
-
+    private RequestApi requestApi = new RequestApi();
     private static List<NodeStatusDao> nodeStatusDaos = new ArrayList<>();
 
     /**
@@ -74,7 +73,7 @@ public class Module {
         double totalSize = 0;
         double useSize = 0;
 
-        hostAddress = getLocalIpAddress();
+        hostAddress = getLocalIpAddress().concat(":" + StorageNodeApplication.getSettingPort());
         File[] drives = File.listRoots();
         totalSize = drives[0].getTotalSpace() / Math.pow(1024, 3);
         useSize = drives[0].getUsableSpace() / Math.pow(1024, 3);
@@ -95,9 +94,11 @@ public class Module {
 
         nodeStatusDaos = nodeStatusDaos.stream()
             .map(nodeStatusDao -> {
-                //TODO: 모든 호스트 시스템 상태 정보 갱신 및 모든 참가 노드 갱신(RestAPI 요청)
-                nodeStatusDao.setUseSize(new Random().nextDouble());
-                nodeStatusDao.setTotalSize(new Random().nextDouble());
+                NodeStatusDao nodeStatus = (NodeStatusDao) requestApi
+                    .get("http://".concat(nodeStatusDao.getHostName()).concat("/node/status"));
+
+                nodeStatusDao.setUseSize(nodeStatus.getUseSize());
+                nodeStatusDao.setTotalSize(nodeStatus.getTotalSize());
                 return nodeStatusDao;
             })
             .collect(Collectors.toList());
@@ -115,7 +116,8 @@ public class Module {
             .concat("/node/join?ip=")
             .concat(localIp)
             .concat("&port=" + StorageNodeApplication.getSettingPort());
-        List<NodeStatusDao> nodeStatusDaos = (List<NodeStatusDao>) new RequestApi().post(url, null, null);
+        List<NodeStatusDao> nodeStatusDaos = (List<NodeStatusDao>) this.requestApi
+            .post(url, null, null);
         this.nodeStatusDaos.addAll(nodeStatusDaos);
     }
 
@@ -128,9 +130,8 @@ public class Module {
      */
     public Mono<ServerResponse> networkJoin(String ip, int port) {
         try {
-            RequestApi requestApi = new RequestApi();
             NodeStatusDao nodeStatusDao = new ObjectMapper()
-                .convertValue(requestApi.get("http://" + ip + ":" + port + "/node/status"),
+                .convertValue(this.requestApi.get("http://" + ip + ":" + port + "/node/status"),
                     NodeStatusDao.class);
             this.nodeStatusDaos.add(nodeStatusDao);
 
