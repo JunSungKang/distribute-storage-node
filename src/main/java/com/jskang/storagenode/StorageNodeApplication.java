@@ -1,6 +1,6 @@
 package com.jskang.storagenode;
 
-import com.jskang.storagenode.node.Module;
+import com.jskang.storagenode.node.Node;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +43,7 @@ public class StorageNodeApplication implements ApplicationListener<ApplicationSt
 
         if (settingPort != 20040) {
             try {
-                new Module().networkJoinRequest();
+                new Node().networkJoinRequest();
                 LOG.info("Storage node network join completed.");
             } catch (Exception e) {
                 LOG.error(e.getMessage());

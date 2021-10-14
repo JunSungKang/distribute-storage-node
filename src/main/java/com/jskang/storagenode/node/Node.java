@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
-public class Module {
+public class Node {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
     private RequestApi requestApi = new RequestApi();
