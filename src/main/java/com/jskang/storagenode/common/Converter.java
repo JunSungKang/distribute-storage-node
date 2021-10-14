@@ -18,6 +18,10 @@ public class Converter {
         }
     }
 
+    public static Object objToObj(Object json, TypeReference typeReference){
+        return mapper.convertValue(json, typeReference);
+    }
+
     public static Map jsonToMap(String json) {
         try {
             return mapper.readValue(json, new TypeReference<Map>() {
@@ -27,17 +31,9 @@ public class Converter {
         }
     }
 
-    public static Object jsonToObj(String json, TypeReference typeReference){
+    public static List jsonToList(String json) {
         try {
-            return mapper.readValue(json, typeReference);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException(e.getMessage());
-        }
-    }
-
-    public static List jsonToList(String stringArray) {
-        try {
-            return mapper.readValue(stringArray, new TypeReference<List>() {
+            return mapper.readValue(json, new TypeReference<List>() {
             });
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e.getMessage());

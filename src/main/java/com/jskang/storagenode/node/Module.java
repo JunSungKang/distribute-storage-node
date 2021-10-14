@@ -1,16 +1,19 @@
 package com.jskang.storagenode.node;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jskang.storagenode.StorageNodeApplication;
+import com.jskang.storagenode.common.Converter;
 import com.jskang.storagenode.common.RequestApi;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Enumeration;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.LinkedList;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -20,7 +23,15 @@ public class Module {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
     private RequestApi requestApi = new RequestApi();
-    private static List<NodeStatusDao> nodeStatusDaos = new ArrayList<>();
+    private static NodeStatusDaos nodeStatusDaos = new NodeStatusDaos(0, new LinkedList<>());
+
+    /**
+     * Generating version
+     */
+    public long generatingVersion() {
+        long version = new Date().getTime();
+        return version;
+    }
 
     /**
      * Server's local IP address lookup
@@ -87,24 +98,6 @@ public class Module {
     }
 
     /**
-     * Updating information of all nodes joining the storage network
-     */
-    public void reloadNodeList() {
-        LOG.info("Update all node information.");
-
-        nodeStatusDaos = nodeStatusDaos.stream()
-            .map(nodeStatusDao -> {
-                NodeStatusDao nodeStatus = (NodeStatusDao) requestApi
-                    .get("http://".concat(nodeStatusDao.getHostName()).concat("/node/status"));
-
-                nodeStatusDao.setUseSize(nodeStatus.getUseSize());
-                nodeStatusDao.setTotalSize(nodeStatus.getTotalSize());
-                return nodeStatusDao;
-            })
-            .collect(Collectors.toList());
-    }
-
-    /**
      * Node join request
      *
      * @throws Exception
@@ -116,9 +109,12 @@ public class Module {
             .concat("/node/join?ip=")
             .concat(localIp)
             .concat("&port=" + StorageNodeApplication.getSettingPort());
-        List<NodeStatusDao> nodeStatusDaos = (List<NodeStatusDao>) this.requestApi
-            .post(url, null, null);
-        this.nodeStatusDaos.addAll(nodeStatusDaos);
+
+        Object result = this.requestApi.post(url, null, null);
+        NodeStatusDaos nodeStatusDaos = (NodeStatusDaos) Converter.objToObj(result, new TypeReference<NodeStatusDaos>() {});
+
+        this.nodeStatusDaos.setVersion(nodeStatusDaos.getVersion());
+        this.nodeStatusDaos.setArrayNodeStatusDaos(nodeStatusDaos.getNodeStatusDaos());
     }
 
     /**
@@ -133,7 +129,9 @@ public class Module {
             NodeStatusDao nodeStatusDao = new ObjectMapper()
                 .convertValue(this.requestApi.get("http://" + ip + ":" + port + "/node/status"),
                     NodeStatusDao.class);
-            this.nodeStatusDaos.add(nodeStatusDao);
+
+            this.nodeStatusDaos.setVersion(this.generatingVersion());
+            this.nodeStatusDaos.addNodeStatusDao(nodeStatusDao);
 
             return ServerResponse.ok().bodyValue(this.nodeStatusDaos);
         } catch (Exception e) {
