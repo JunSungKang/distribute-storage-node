@@ -10,7 +10,7 @@ public class Converter {
 
     private static ObjectMapper mapper = new ObjectMapper();
 
-    public static String mapToJson(Map map) {
+    public static String objToJson(Object map) {
         try {
             return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(map);
         } catch (JsonProcessingException e) {
@@ -22,14 +22,6 @@ public class Converter {
         try {
             return mapper.readValue(json, new TypeReference<Map>() {
             });
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException(e.getMessage());
-        }
-    }
-
-    public static String listToStringArray(List list) {
-        try {
-            return mapper.writeValueAsString(list);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e.getMessage());
         }

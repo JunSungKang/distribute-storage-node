@@ -70,7 +70,7 @@ public class RequestApi {
             }
         }
 
-        String requestBody = Converter.mapToJson(data);
+        String requestBody = Converter.objToJson(data);
         if (requestBody.equals("null")) {
             requestBody = "";
         }
