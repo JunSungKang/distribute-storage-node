@@ -98,6 +98,6 @@ public class RequestApi {
             LOG.error(e.getMessage());
         }
 
-        return Converter.stringArrayToList(result);
+        return Converter.jsonToMap(result);
     }
 }

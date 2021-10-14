@@ -27,7 +27,15 @@ public class Converter {
         }
     }
 
-    public static List stringArrayToList(String stringArray) {
+    public static Object jsonToObj(String json, TypeReference typeReference){
+        try {
+            return mapper.readValue(json, typeReference);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e.getMessage());
+        }
+    }
+
+    public static List jsonToList(String stringArray) {
         try {
             return mapper.readValue(stringArray, new TypeReference<List>() {
             });
