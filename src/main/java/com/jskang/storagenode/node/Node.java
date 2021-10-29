@@ -101,6 +101,7 @@ public class Node {
             String hostName = nodeStatusDao[random].getHostName();
             Object data = this.requestApi.get(hostName + "/node/list");
             if (data instanceof String && data.equals("connect fail")) {
+                this.nodeStatusDaos.setVersion(this.generatingVersion());
                 this.nodeStatusDaos.removeNodeStatusDaos(hostName);
                 LOG.info("Connect node remove [" +hostName+ "]");
             } else {
