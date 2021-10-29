@@ -1,7 +1,8 @@
 package com.jskang.storagenode.node;
 
+import static org.springframework.web.reactive.function.server.ServerResponse.ok;
+
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jskang.storagenode.StorageNodeApplication;
 import com.jskang.storagenode.common.Converter;
 import com.jskang.storagenode.common.RequestApi;
@@ -12,10 +13,12 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
@@ -28,7 +31,7 @@ public class Node {
     /**
      * Generating version
      */
-    public long generatingVersion() {
+    private long generatingVersion() {
         long version = new Date().getTime();
         return version;
     }
@@ -64,22 +67,11 @@ public class Node {
     }
 
     /**
-     * Search the list of all registered nodes.
-     *
-     * @return all nodes.
-     */
-    public Mono<ServerResponse> getNodeLists() {
-        return ServerResponse.ok().bodyValue(this.nodeStatusDaos);
-    }
-
-    /**
      * Current own node disk status information inquiry
      *
      * @return Returns the host name, current disk usage, and total disk size.
      */
-    public Mono<ServerResponse> getNodeStatus() {
-        LOG.info("Select node information.");
-
+    private NodeStatusDao nodeStatus() {
         String hostAddress = "";
         double totalSize = 0;
         double useSize = 0;
@@ -90,10 +82,30 @@ public class Node {
         useSize = drives[0].getUsableSpace() / Math.pow(1024, 3);
 
         NodeStatusDao nodeStatusDao = new NodeStatusDao(hostAddress, useSize, totalSize);
+        return nodeStatusDao;
+    }
+
+    /**
+     * Search the list of all registered nodes.
+     *
+     * @return all nodes.
+     */
+    public Mono<ServerResponse> getNodeLists() {
+        return ok().bodyValue(this.nodeStatusDaos);
+    }
+
+    /**
+     * Current own node disk status information inquiry
+     *
+     * @return Returns the host name, current disk usage, and total disk size.
+     */
+    public Mono<ServerResponse> getNodeStatus() {
+        LOG.info("Select node information.");
+        NodeStatusDao nodeStatusDao = this.nodeStatus();
         if (nodeStatusDao == null) {
-            return ServerResponse.ok().bodyValue(new ArrayList<>());
+            return ok().bodyValue(new ArrayList<>());
         } else {
-            return ServerResponse.ok().bodyValue(nodeStatusDao);
+            return ok().bodyValue(nodeStatusDao);
         }
     }
 
@@ -105,13 +117,17 @@ public class Node {
     public void networkJoinRequest() throws Exception {
         String localIp = this.getLocalIpAddress();
 
-        String url = "http://".concat("192.168.55.23").concat(":").concat("20040")
-            .concat("/node/join?ip=")
-            .concat(localIp)
+        String url = "http://192.168.55.23:"
+            .concat("20040/node/join?ip=" + localIp)
             .concat("&port=" + StorageNodeApplication.getSettingPort());
 
-        Object result = this.requestApi.post(url, null, null);
-        NodeStatusDaos nodeStatusDaos = (NodeStatusDaos) Converter.objToObj(result, new TypeReference<NodeStatusDaos>() {});
+        Map<String, Object> data = new HashMap<>();
+        data.put("nodeStatus", this.nodeStatus());
+
+        Object result = this.requestApi.post(url, null, data);
+        NodeStatusDaos nodeStatusDaos = (NodeStatusDaos) Converter
+            .objToObj(result, new TypeReference<NodeStatusDaos>() {
+            });
 
         this.nodeStatusDaos.setVersion(nodeStatusDaos.getVersion());
         this.nodeStatusDaos.setArrayNodeStatusDaos(nodeStatusDaos.getNodeStatusDaos());
@@ -120,20 +136,21 @@ public class Node {
     /**
      * Add the node's network participation list
      *
-     * @param ip   IP of the node to be added
-     * @param port Port of the node to be added
+     * @param request restAPI post data.
      * @return if success, node status info. other case exception message.
      */
-    public Mono<ServerResponse> networkJoin(String ip, int port) {
+    public Mono<ServerResponse> networkJoin(ServerRequest request) {
         try {
-            NodeStatusDao nodeStatusDao = new ObjectMapper()
-                .convertValue(this.requestApi.get("http://" + ip + ":" + port + "/node/status"),
-                    NodeStatusDao.class);
-
-            this.nodeStatusDaos.setVersion(this.generatingVersion());
-            this.nodeStatusDaos.addNodeStatusDao(nodeStatusDao);
-
-            return ServerResponse.ok().bodyValue(this.nodeStatusDaos);
+            return request.bodyToMono(String.class)
+                .flatMap(str -> {
+                    Map<String, Map<String, Object>> data = Converter.jsonToMap(str);
+                    NodeStatusDao nodeStatusDao = (NodeStatusDao) Converter
+                        .objToObj(data.get("nodeStatus"), new TypeReference<NodeStatusDao>() {
+                        });
+                    this.nodeStatusDaos.setVersion(this.generatingVersion());
+                    this.nodeStatusDaos.addNodeStatusDao(nodeStatusDao);
+                    return ok().bodyValue(this.nodeStatusDaos);
+                });
         } catch (Exception e) {
             return ServerResponse.badRequest().bodyValue(e.getMessage());
         }

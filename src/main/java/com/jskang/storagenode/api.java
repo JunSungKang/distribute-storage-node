@@ -23,9 +23,7 @@ public class api {
         return RouterFunctions.route()
             .GET("node/list", request -> node.getNodeLists())
             .GET("node/status", request -> node.getNodeStatus())
-            .POST("node/join", request -> node.networkJoin(
-                request.queryParam("ip").get(), Integer.valueOf(request.queryParam("port").get()))
-            )
+            .POST("node/join", request -> node.networkJoin(request))
             .POST("file/upload", RequestPredicates.accept(MediaType.MULTIPART_FORM_DATA), request -> new Upload().fileUpload(request))
             .POST("file/download", RequestPredicates.accept(MediaType.TEXT_PLAIN), request -> new Download().fileDownload())
             .build();
