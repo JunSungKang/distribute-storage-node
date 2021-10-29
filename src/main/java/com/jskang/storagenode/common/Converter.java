@@ -18,7 +18,7 @@ public class Converter {
         }
     }
 
-    public static Object objToObj(Object json, TypeReference typeReference){
+    public static Object objToObj(Object json, TypeReference typeReference) {
         return mapper.convertValue(json, typeReference);
     }
 

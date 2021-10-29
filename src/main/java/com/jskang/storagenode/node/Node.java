@@ -103,7 +103,7 @@ public class Node {
             if (data instanceof String && data.equals("connect fail")) {
                 this.nodeStatusDaos.setVersion(this.generatingVersion());
                 this.nodeStatusDaos.removeNodeStatusDaos(hostName);
-                LOG.info("Connect node remove [" +hostName+ "]");
+                LOG.info("Connect node remove [" + hostName + "]");
             } else {
                 NodeStatusDaos nodeStatusDaos =
                     (NodeStatusDaos) Converter.objToObj(data, new TypeReference<NodeStatusDaos>() {

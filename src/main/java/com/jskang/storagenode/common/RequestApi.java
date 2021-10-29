@@ -43,7 +43,7 @@ public class RequestApi {
         try {
             result = client.sendAsync(
                 HttpRequest
-                    .newBuilder(new URI("http://" +url))
+                    .newBuilder(new URI("http://" + url))
                     .GET()
                     .headers(commonHeaders.toArray(String[]::new))
                     .build(),
@@ -59,7 +59,7 @@ public class RequestApi {
             LOG.error(e.getMessage());
         }
 
-        if (result.equals("")){
+        if (result.equals("")) {
             return "connect fail";
         } else {
             return Converter.jsonToMap(result);
@@ -86,7 +86,7 @@ public class RequestApi {
         try {
             result = client.sendAsync(
                 HttpRequest
-                    .newBuilder(new URI("http://" +url))
+                    .newBuilder(new URI("http://" + url))
                     .POST(body)
                     .headers(commonHeaders.toArray(String[]::new))
                     .build(),
