@@ -16,12 +16,16 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
+@Component
 public class Node {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
@@ -86,6 +90,33 @@ public class Node {
     }
 
     /**
+     * Node refresh.
+     */
+    @Scheduled(fixedDelay = 5000)
+    private void nodeRefresh() {
+        if (this.nodeStatusDaos.getNodeStatusDaos().length > 1) {
+            int random = new Random().nextInt(this.nodeStatusDaos.getNodeStatusDaos().length);
+            NodeStatusDao[] nodeStatusDao = this.nodeStatusDaos.getNodeStatusDaos();
+
+            String hostName = nodeStatusDao[random].getHostName();
+            Object data = this.requestApi.get(hostName + "/node/list");
+            if (data instanceof String && data.equals("connect fail")) {
+                this.nodeStatusDaos.removeNodeStatusDaos(hostName);
+                LOG.info("Connect node remove [" +hostName+ "]");
+            } else {
+                NodeStatusDaos nodeStatusDaos =
+                    (NodeStatusDaos) Converter.objToObj(data, new TypeReference<NodeStatusDaos>() {
+                    });
+
+                if (this.nodeStatusDaos.getVersion() < nodeStatusDaos.getVersion()) {
+                    this.nodeStatusDaos.setVersion(nodeStatusDaos.getVersion());
+                    this.nodeStatusDaos.setArrayNodeStatusDaos(nodeStatusDaos.getNodeStatusDaos());
+                }
+            }
+        }
+    }
+
+    /**
      * Search the list of all registered nodes.
      *
      * @return all nodes.
@@ -117,7 +148,7 @@ public class Node {
     public void networkJoinRequest() throws Exception {
         String localIp = this.getLocalIpAddress();
 
-        String url = "http://192.168.55.23:"
+        String url = "192.168.55.23:"
             .concat("20040/node/join?ip=" + localIp)
             .concat("&port=" + StorageNodeApplication.getSettingPort());
 
@@ -149,6 +180,16 @@ public class Node {
                         });
                     this.nodeStatusDaos.setVersion(this.generatingVersion());
                     this.nodeStatusDaos.addNodeStatusDao(nodeStatusDao);
+
+                    // init seed node
+                    if (
+                        !this.nodeStatusDaos
+                            .nodeSearch(this.nodeStatus().getHostName())
+                            .isPresent()
+                    ) {
+                        this.nodeStatusDaos.addNodeStatusDao(this.nodeStatus());
+                    }
+
                     return ok().bodyValue(this.nodeStatusDaos);
                 });
         } catch (Exception e) {
