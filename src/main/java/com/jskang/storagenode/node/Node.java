@@ -48,7 +48,7 @@ public class Node {
         double useSize = 0;
 
         hostAddress = this.networkInfo.getLocalIpAddress()
-            .concat(":" + StorageNodeApplication.getSettingPort());
+            .concat(":" + this.networkInfo.getPort());
         File[] drives = File.listRoots();
         totalSize = drives[0].getTotalSpace() / Math.pow(1024, 3);
         useSize = drives[0].getUsableSpace() / Math.pow(1024, 3);
@@ -123,7 +123,7 @@ public class Node {
 
         String url = "192.168.55.23:"
             .concat("20040/node/join?ip=" + localIp)
-            .concat("&port=" + StorageNodeApplication.getSettingPort());
+            .concat("&port=" + this.networkInfo.getPort());
 
         Map<String, Object> data = new HashMap<>();
         data.put("nodeStatus", this.nodeStatus());

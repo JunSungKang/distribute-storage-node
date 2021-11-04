@@ -1,5 +1,6 @@
 package com.jskang.storagenode.common;
 
+import com.jskang.storagenode.StorageNodeApplication;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -11,16 +12,27 @@ public class NetworkInfo {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
     private String localIpAddress = "";
+    private int port = -1;
 
     /**
      * get local ip address.
-     * @return
+     *
+     * @return setting ip.
      */
     public String getLocalIpAddress() {
         if (this.localIpAddress.isBlank()) {
             this.setLocalIpAddress();
         }
         return this.localIpAddress;
+    }
+
+    /**
+     * get local port.
+     *
+     * @return setting port.
+     */
+    public int getPort() {
+        return StorageNodeApplication.getSettingPort();
     }
 
     /**
