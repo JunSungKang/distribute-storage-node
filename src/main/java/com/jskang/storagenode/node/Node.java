@@ -5,15 +5,12 @@ import static org.springframework.web.reactive.function.server.ServerResponse.ok
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.jskang.storagenode.StorageNodeApplication;
 import com.jskang.storagenode.common.Converter;
+import com.jskang.storagenode.common.NetworkInfo;
 import com.jskang.storagenode.common.RequestApi;
 import com.jskang.storagenode.file.FileManage;
 import java.io.File;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -30,6 +27,7 @@ public class Node {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
     private RequestApi requestApi = new RequestApi();
+    private NetworkInfo networkInfo = new NetworkInfo();
 
     /**
      * Generating version
@@ -37,36 +35,6 @@ public class Node {
     private long generatingVersion() {
         long version = new Date().getTime();
         return version;
-    }
-
-    /**
-     * Server's local IP address lookup
-     *
-     * @return Returns the IP Address.
-     */
-    private String getLocalIpAddress() {
-        try {
-            LOG.info("Select the hostname or ip address.");
-
-            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
-                en.hasMoreElements(); ) {
-                NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses();
-                    enumIpAddr.hasMoreElements(); ) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress()
-                        && inetAddress
-                        .isSiteLocalAddress()) {
-                        return inetAddress.getHostAddress();
-                    }
-                }
-            }
-        } catch (SocketException ex) {
-            LOG.error("Select the hostname or ip address failed.");
-            return "";
-        }
-
-        return "";
     }
 
     /**
@@ -79,7 +47,8 @@ public class Node {
         double totalSize = 0;
         double useSize = 0;
 
-        hostAddress = getLocalIpAddress().concat(":" + StorageNodeApplication.getSettingPort());
+        hostAddress = this.networkInfo.getLocalIpAddress()
+            .concat(":" + StorageNodeApplication.getSettingPort());
         File[] drives = File.listRoots();
         totalSize = drives[0].getTotalSpace() / Math.pow(1024, 3);
         useSize = drives[0].getUsableSpace() / Math.pow(1024, 3);
@@ -150,7 +119,7 @@ public class Node {
      * @throws Exception
      */
     public void networkJoinRequest() throws Exception {
-        String localIp = this.getLocalIpAddress();
+        String localIp = this.networkInfo.getLocalIpAddress();
 
         String url = "192.168.55.23:"
             .concat("20040/node/join?ip=" + localIp)
