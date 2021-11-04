@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.jskang.storagenode.StorageNodeApplication;
 import com.jskang.storagenode.common.Converter;
 import com.jskang.storagenode.common.RequestApi;
+import com.jskang.storagenode.file.FileManage;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -85,7 +86,11 @@ public class Node {
         totalSize = drives[0].getTotalSpace() / Math.pow(1024, 3);
         useSize = drives[0].getUsableSpace() / Math.pow(1024, 3);
 
-        NodeStatusDao nodeStatusDao = new NodeStatusDao(hostAddress, useSize, totalSize);
+        NodeStatusDao nodeStatusDao = new NodeStatusDao(
+            hostAddress,
+            totalSize - useSize,
+            FileManage.getAllFileManage()
+        );
         return nodeStatusDao;
     }
 

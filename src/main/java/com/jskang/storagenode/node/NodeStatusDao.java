@@ -2,41 +2,36 @@ package com.jskang.storagenode.node;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 
 public class NodeStatusDao {
 
     private String hostName;
-    private double useSize;
-    private double totalSize;
+    private double freeSize;
+    private Map<String, List<Path>> fileManage;
 
     @JsonCreator
     public NodeStatusDao(
         @JsonProperty("hostAddress") String hostName,
-        @JsonProperty("useSize") double useSize,
-        @JsonProperty("totalSize") double totalSize) {
+        @JsonProperty("freeSize") double freeSize,
+        @JsonProperty("fileManage") Map<String, List<Path>> fileManage) {
         this.hostName = hostName;
-        this.useSize = useSize;
-        this.totalSize = totalSize;
+        this.freeSize = freeSize;
+        this.fileManage = fileManage;
     }
 
     public String getHostName() {
         return hostName;
     }
 
-    public double getUseSize() {
-        return useSize;
+    public double getFreeSize() {
+        return freeSize;
     }
 
-    public double getTotalSize() {
-        return totalSize;
-    }
-
-    public void setUseSize(double useSize) {
-        this.useSize = useSize;
-    }
-
-    public void setTotalSize(double totalSize) {
-        this.totalSize = totalSize;
+    public Map<String, List<Path>> getFileManage() {
+        return fileManage;
     }
 
     public boolean isHostName(String hostName) {

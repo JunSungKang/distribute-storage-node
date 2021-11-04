@@ -13,6 +13,13 @@ public class FileManage {
     private static Map<String, List<Path>> fileManage = new HashMap<>();
 
     /**
+     * all File distribute server get position.
+     */
+    public static Map<String, List<Path>> getAllFileManage() {
+        return fileManage;
+    }
+
+    /**
      * file distribute server get position.
      *
      * @param fileKey file key (hash)
