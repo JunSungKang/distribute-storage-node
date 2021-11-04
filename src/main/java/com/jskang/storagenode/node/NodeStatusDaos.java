@@ -2,14 +2,16 @@ package com.jskang.storagenode.node;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class NodeStatusDaos {
 
-    private long version = 0;
-    private List<NodeStatusDao> nodeStatusDaos = new LinkedList<>();
+    private static long version = 0;
+    private static List<NodeStatusDao> nodeStatusDaos = new LinkedList<>();
 
     @JsonCreator
     public NodeStatusDaos(
@@ -19,12 +21,12 @@ public class NodeStatusDaos {
         this.nodeStatusDaos = nodeStatusDaos;
     }
 
-    public long getVersion() {
+    public static long getVersion() {
         return version;
     }
 
-    public void setVersion(long version) {
-        this.version = version;
+    public static void setVersion(long version) {
+        version = version;
     }
 
     /**
@@ -33,18 +35,25 @@ public class NodeStatusDaos {
      * @param version Generating version.
      * @return
      */
-    public long compareToVersion(int version) {
-        return this.version > version ? this.version : version;
+    public static long compareToVersion(int version) {
+        return version > version ? version : version;
     }
 
-    public NodeStatusDao[] getNodeStatusDaos() {
-        NodeStatusDao[] result = new NodeStatusDao[this.nodeStatusDaos.size()];
-        result = this.nodeStatusDaos.toArray(result);
+    public static NodeStatusDao[] getNodeStatusDaos() {
+        NodeStatusDao[] result = new NodeStatusDao[nodeStatusDaos.size()];
+        result = nodeStatusDaos.toArray(result);
         return result;
     }
 
-    public void addNodeStatusDao(NodeStatusDao nodeStatusDao) {
-        this.nodeStatusDaos.add(nodeStatusDao);
+    public static Map<String, Object> getNodeStatusAlls(){
+        Map<String, Object> result = new HashMap<>();
+        result.put("version", version);
+        result.put("nodeStatusDaos", nodeStatusDaos);
+        return result;
+    }
+
+    public static void addNodeStatusDao(NodeStatusDao nodeStatusDao) {
+        nodeStatusDaos.add(nodeStatusDao);
     }
 
     /**
@@ -52,20 +61,20 @@ public class NodeStatusDaos {
      *
      * @param nodeStatusDaos Input type linkedList.
      */
-    public void setNodeStatusDaos(List<NodeStatusDao> nodeStatusDaos) {
-        this.nodeStatusDaos = nodeStatusDaos;
+    public static void setNodeStatusDaos(List<NodeStatusDao> nodeStatusDaos) {
+        nodeStatusDaos = nodeStatusDaos;
     }
 
     /**
      * NodeStatusDaos overwrite.
      *
-     * @param nodeStatusDaos Input type NodeStatusDao Array.
+     * @param arrayNodeStatusDaos Input type NodeStatusDao Array.
      */
-    public void setArrayNodeStatusDaos(NodeStatusDao[] nodeStatusDaos) {
-        this.nodeStatusDaos.clear();
+    public static void setArrayNodeStatusDaos(NodeStatusDao[] arrayNodeStatusDaos) {
+        nodeStatusDaos.clear();
 
-        for (int i = 0; i < nodeStatusDaos.length; i++) {
-            this.nodeStatusDaos.add(nodeStatusDaos[i]);
+        for (int i = 0; i < arrayNodeStatusDaos.length; i++) {
+            nodeStatusDaos.add(arrayNodeStatusDaos[i]);
         }
     }
 
@@ -74,11 +83,32 @@ public class NodeStatusDaos {
      *
      * @param hostName remove is hostname.
      */
-    public void removeNodeStatusDaos(String hostName) {
-        Optional<NodeStatusDao> nodeStatusDao = this.nodeSearch(hostName);
+    public static void removeNodeStatusDaos(String hostName) {
+        Optional<NodeStatusDao> nodeStatusDao = nodeSearch(hostName);
         if (nodeStatusDao.isPresent()) {
-            this.nodeStatusDaos.remove(nodeStatusDao.get());
+            nodeStatusDaos.remove(nodeStatusDao.get());
         }
+    }
+
+    /**
+     * Update node status.
+     * @param hostName      input hostname.
+     * @param nodeStatusDao nodeStatusDao.
+     * @return Success if idx value greater than -1, failure otherwise.
+     */
+    public static int editNodeStatusDaos(String hostName, NodeStatusDao nodeStatusDao) {
+        int idx = -1;
+        for (int i=0; i<nodeStatusDaos.size(); i++){
+            if (nodeStatusDaos.get(i).getHostName().equals(hostName)) {
+                idx = i;
+                break;
+            }
+        }
+
+        if (idx > -1){
+            nodeStatusDaos.set(idx, nodeStatusDao);
+        }
+        return idx;
     }
 
     /**
@@ -87,8 +117,8 @@ public class NodeStatusDaos {
      * @param hostName search hostname.
      * @return if true search count > 1, others search count = 0.
      */
-    public Optional<NodeStatusDao> nodeSearch(String hostName) {
-        return this.nodeStatusDaos.stream()
+    public static Optional<NodeStatusDao> nodeSearch(String hostName) {
+        return nodeStatusDaos.stream()
             .filter(nodeStatusDao -> nodeStatusDao.getHostName().equals(hostName))
             .findFirst();
     }

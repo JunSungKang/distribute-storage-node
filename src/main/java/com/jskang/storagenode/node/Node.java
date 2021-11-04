@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Random;
 import org.slf4j.Logger;
@@ -31,7 +30,6 @@ public class Node {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
     private RequestApi requestApi = new RequestApi();
-    private static NodeStatusDaos nodeStatusDaos = new NodeStatusDaos(0, new LinkedList<>());
 
     /**
      * Generating version
@@ -99,24 +97,24 @@ public class Node {
      */
     @Scheduled(fixedDelay = 5000)
     private void nodeRefresh() {
-        if (this.nodeStatusDaos.getNodeStatusDaos().length > 1) {
-            int random = new Random().nextInt(this.nodeStatusDaos.getNodeStatusDaos().length);
-            NodeStatusDao[] nodeStatusDao = this.nodeStatusDaos.getNodeStatusDaos();
+        if (NodeStatusDaos.getNodeStatusDaos().length > 1) {
+            int random = new Random().nextInt(NodeStatusDaos.getNodeStatusDaos().length);
+            NodeStatusDao[] nodeStatusDao = NodeStatusDaos.getNodeStatusDaos();
 
             String hostName = nodeStatusDao[random].getHostName();
             Object data = this.requestApi.get(hostName + "/node/list");
             if (data instanceof String && data.equals("connect fail")) {
-                this.nodeStatusDaos.setVersion(this.generatingVersion());
-                this.nodeStatusDaos.removeNodeStatusDaos(hostName);
+                NodeStatusDaos.setVersion(this.generatingVersion());
+                NodeStatusDaos.removeNodeStatusDaos(hostName);
                 LOG.info("Connect node remove [" + hostName + "]");
             } else {
                 NodeStatusDaos nodeStatusDaos =
                     (NodeStatusDaos) Converter.objToObj(data, new TypeReference<NodeStatusDaos>() {
                     });
 
-                if (this.nodeStatusDaos.getVersion() < nodeStatusDaos.getVersion()) {
-                    this.nodeStatusDaos.setVersion(nodeStatusDaos.getVersion());
-                    this.nodeStatusDaos.setArrayNodeStatusDaos(nodeStatusDaos.getNodeStatusDaos());
+                if (NodeStatusDaos.getVersion() < nodeStatusDaos.getVersion()) {
+                    NodeStatusDaos.setVersion(nodeStatusDaos.getVersion());
+                    NodeStatusDaos.setArrayNodeStatusDaos(nodeStatusDaos.getNodeStatusDaos());
                 }
             }
         }
@@ -128,7 +126,7 @@ public class Node {
      * @return all nodes.
      */
     public Mono<ServerResponse> getNodeLists() {
-        return ok().bodyValue(this.nodeStatusDaos);
+        return ok().bodyValue(NodeStatusDaos.getNodeStatusAlls());
     }
 
     /**
@@ -166,8 +164,8 @@ public class Node {
             .objToObj(result, new TypeReference<NodeStatusDaos>() {
             });
 
-        this.nodeStatusDaos.setVersion(nodeStatusDaos.getVersion());
-        this.nodeStatusDaos.setArrayNodeStatusDaos(nodeStatusDaos.getNodeStatusDaos());
+        NodeStatusDaos.setVersion(nodeStatusDaos.getVersion());
+        NodeStatusDaos.setArrayNodeStatusDaos(nodeStatusDaos.getNodeStatusDaos());
     }
 
     /**
@@ -184,19 +182,19 @@ public class Node {
                     NodeStatusDao nodeStatusDao = (NodeStatusDao) Converter
                         .objToObj(data.get("nodeStatus"), new TypeReference<NodeStatusDao>() {
                         });
-                    this.nodeStatusDaos.setVersion(this.generatingVersion());
-                    this.nodeStatusDaos.addNodeStatusDao(nodeStatusDao);
+                    NodeStatusDaos.setVersion(this.generatingVersion());
+                    NodeStatusDaos.addNodeStatusDao(nodeStatusDao);
 
                     // init seed node
                     if (
-                        !this.nodeStatusDaos
+                        !NodeStatusDaos
                             .nodeSearch(this.nodeStatus().getHostName())
                             .isPresent()
                     ) {
-                        this.nodeStatusDaos.addNodeStatusDao(this.nodeStatus());
+                        NodeStatusDaos.addNodeStatusDao(this.nodeStatus());
                     }
 
-                    return ok().bodyValue(this.nodeStatusDaos);
+                    return ok().bodyValue(NodeStatusDaos.getNodeStatusAlls());
                 });
         } catch (Exception e) {
             return ServerResponse.badRequest().bodyValue(e.getMessage());
