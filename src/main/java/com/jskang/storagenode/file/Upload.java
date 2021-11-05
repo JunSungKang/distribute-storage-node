@@ -3,6 +3,9 @@ package com.jskang.storagenode.file;
 import static org.springframework.web.reactive.function.server.ServerResponse.badRequest;
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
+import com.jskang.storagenode.common.SystemInfo;
+import com.jskang.storagenode.node.NodeStatusDao;
+import com.jskang.storagenode.node.NodeStatusDaos;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -20,6 +23,7 @@ import reactor.core.publisher.Mono;
 public class Upload {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
+    private SystemInfo systemInfo = new SystemInfo();
 
     /**
      * File upload
@@ -45,6 +49,21 @@ public class Upload {
                     return badRequest().body(
                         BodyInserters.fromProducer(Mono.just("{\"statusCode\": 500}"), String.class)
                     );
+                })
+                .doOnSuccess(o -> {
+                    String hostName = this.systemInfo.getHostName();
+                    NodeStatusDao nodeStatusDao = new NodeStatusDao(
+                        hostName,
+                        this.systemInfo.getDiskTotalSize() - this.systemInfo.getDiskUseSize()
+                    );
+                    nodeStatusDao.updateFileManage();
+
+                    NodeStatusDaos.editNodeStatusDaos(hostName, nodeStatusDao);
+                    NodeStatusDaos.updateVersion();
+                    LOG.info("file upload success.");
+                })
+                .doOnError(throwable -> {
+                    LOG.error(throwable.getMessage());
                 })
                 .then(ok().body(
                     BodyInserters.fromProducer(Mono.just("{\"statusCode\": 200}"), String.class)));
