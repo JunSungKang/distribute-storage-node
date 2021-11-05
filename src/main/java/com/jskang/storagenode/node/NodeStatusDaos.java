@@ -2,6 +2,7 @@ package com.jskang.storagenode.node;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,8 +26,15 @@ public class NodeStatusDaos {
         return version;
     }
 
-    public static void setVersion(long version) {
-        version = version;
+    public static void setVersion(long lastedVersion) {
+        version = lastedVersion;
+    }
+
+    /**
+     * Generating version
+     */
+    public static void updateVersion() {
+        version = new Date().getTime();
     }
 
     /**
@@ -45,7 +53,7 @@ public class NodeStatusDaos {
         return result;
     }
 
-    public static Map<String, Object> getNodeStatusAlls(){
+    public static Map<String, Object> getNodeStatusAlls() {
         Map<String, Object> result = new HashMap<>();
         result.put("version", version);
         result.put("nodeStatusDaos", nodeStatusDaos);
@@ -92,21 +100,26 @@ public class NodeStatusDaos {
 
     /**
      * Update node status.
+     *
      * @param hostName      input hostname.
      * @param nodeStatusDao nodeStatusDao.
      * @return Success if idx value greater than -1, failure otherwise.
      */
     public static int editNodeStatusDaos(String hostName, NodeStatusDao nodeStatusDao) {
         int idx = -1;
-        for (int i=0; i<nodeStatusDaos.size(); i++){
-            if (nodeStatusDaos.get(i).getHostName().equals(hostName)) {
-                idx = i;
-                break;
+        if (nodeStatusDaos.size() < 1) {
+            nodeStatusDaos.add(nodeStatusDao);
+        } else {
+            for (int i = 0; i < nodeStatusDaos.size(); i++) {
+                if (nodeStatusDaos.get(i).getHostName().equals(hostName)) {
+                    idx = i;
+                    break;
+                }
             }
-        }
 
-        if (idx > -1){
-            nodeStatusDaos.set(idx, nodeStatusDao);
+            if (idx > -1) {
+                nodeStatusDaos.set(idx, nodeStatusDao);
+            }
         }
         return idx;
     }

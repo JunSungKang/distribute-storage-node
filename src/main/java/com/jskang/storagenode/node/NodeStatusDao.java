@@ -2,7 +2,9 @@ package com.jskang.storagenode.node;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jskang.storagenode.file.FileManage;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,11 +17,10 @@ public class NodeStatusDao {
     @JsonCreator
     public NodeStatusDao(
         @JsonProperty("hostAddress") String hostName,
-        @JsonProperty("freeSize") double freeSize,
-        @JsonProperty("fileManage") Map<String, List<Path>> fileManage) {
+        @JsonProperty("freeSize") double freeSize) {
         this.hostName = hostName;
         this.freeSize = freeSize;
-        this.fileManage = fileManage;
+        this.fileManage = new HashMap<>();
     }
 
     public String getHostName() {
@@ -32,6 +33,10 @@ public class NodeStatusDao {
 
     public Map<String, List<Path>> getFileManage() {
         return fileManage;
+    }
+
+    public void updateFileManage() {
+        this.fileManage = FileManage.getAllFileManage();
     }
 
     public boolean isHostName(String hostName) {

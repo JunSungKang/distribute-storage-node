@@ -1,6 +1,7 @@
 package com.jskang.storagenode.common;
 
 import com.jskang.storagenode.StorageNodeApplication;
+import java.io.File;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -8,11 +9,15 @@ import java.util.Enumeration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NetworkInfo {
+public class SystemInfo {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
     private String localIpAddress = "";
     private int port = -1;
+
+    public String getHostName() {
+        return this.getLocalIpAddress() + ":" + this.getPort();
+    }
 
     /**
      * get local ip address.
@@ -21,7 +26,7 @@ public class NetworkInfo {
      */
     public String getLocalIpAddress() {
         if (this.localIpAddress.isBlank()) {
-            this.setLocalIpAddress();
+            this.localIpAddress = this.setLocalIpAddress();
         }
         return this.localIpAddress;
     }
@@ -63,5 +68,25 @@ public class NetworkInfo {
         }
 
         return "";
+    }
+
+    /**
+     * get disk total size.
+     *
+     * @return disk total size.
+     */
+    public double getDiskTotalSize() {
+        File[] drives = File.listRoots();
+        return drives[0].getTotalSpace() / Math.pow(1024, 3);
+    }
+
+    /**
+     * get disk use size.
+     *
+     * @return disk use size.
+     */
+    public double getDiskUseSize() {
+        File[] drives = File.listRoots();
+        return drives[0].getUsableSpace() / Math.pow(1024, 3);
     }
 }

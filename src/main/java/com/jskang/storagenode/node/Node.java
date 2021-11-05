@@ -3,14 +3,10 @@ package com.jskang.storagenode.node;
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.jskang.storagenode.StorageNodeApplication;
 import com.jskang.storagenode.common.Converter;
-import com.jskang.storagenode.common.NetworkInfo;
 import com.jskang.storagenode.common.RequestApi;
-import com.jskang.storagenode.file.FileManage;
-import java.io.File;
+import com.jskang.storagenode.common.SystemInfo;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -27,39 +23,7 @@ public class Node {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
     private RequestApi requestApi = new RequestApi();
-    private NetworkInfo networkInfo = new NetworkInfo();
-
-    /**
-     * Generating version
-     */
-    private long generatingVersion() {
-        long version = new Date().getTime();
-        return version;
-    }
-
-    /**
-     * Current own node disk status information inquiry
-     *
-     * @return Returns the host name, current disk usage, and total disk size.
-     */
-    private NodeStatusDao nodeStatus() {
-        String hostAddress = "";
-        double totalSize = 0;
-        double useSize = 0;
-
-        hostAddress = this.networkInfo.getLocalIpAddress()
-            .concat(":" + this.networkInfo.getPort());
-        File[] drives = File.listRoots();
-        totalSize = drives[0].getTotalSpace() / Math.pow(1024, 3);
-        useSize = drives[0].getUsableSpace() / Math.pow(1024, 3);
-
-        NodeStatusDao nodeStatusDao = new NodeStatusDao(
-            hostAddress,
-            totalSize - useSize,
-            FileManage.getAllFileManage()
-        );
-        return nodeStatusDao;
-    }
+    private SystemInfo systemInfo = new SystemInfo();
 
     /**
      * Node refresh.
@@ -73,7 +37,7 @@ public class Node {
             String hostName = nodeStatusDao[random].getHostName();
             Object data = this.requestApi.get(hostName + "/node/list");
             if (data instanceof String && data.equals("connect fail")) {
-                NodeStatusDaos.setVersion(this.generatingVersion());
+                NodeStatusDaos.updateVersion();
                 NodeStatusDaos.removeNodeStatusDaos(hostName);
                 LOG.info("Connect node remove [" + hostName + "]");
             } else {
@@ -105,7 +69,12 @@ public class Node {
      */
     public Mono<ServerResponse> getNodeStatus() {
         LOG.info("Select node information.");
-        NodeStatusDao nodeStatusDao = this.nodeStatus();
+        NodeStatusDao nodeStatusDao = new NodeStatusDao(
+            this.systemInfo.getHostName(),
+            this.systemInfo.getDiskTotalSize() - this.systemInfo.getDiskUseSize()
+        );
+        nodeStatusDao.updateFileManage();
+
         if (nodeStatusDao == null) {
             return ok().bodyValue(new ArrayList<>());
         } else {
@@ -119,14 +88,20 @@ public class Node {
      * @throws Exception
      */
     public void networkJoinRequest() throws Exception {
-        String localIp = this.networkInfo.getLocalIpAddress();
+        String localIp = this.systemInfo.getLocalIpAddress();
 
         String url = "192.168.55.23:"
             .concat("20040/node/join?ip=" + localIp)
-            .concat("&port=" + this.networkInfo.getPort());
+            .concat("&port=" + this.systemInfo.getPort());
+
+        NodeStatusDao nodeStatusDao = new NodeStatusDao(
+            this.systemInfo.getHostName(),
+            this.systemInfo.getDiskTotalSize() - this.systemInfo.getDiskUseSize()
+        );
+        nodeStatusDao.updateFileManage();
 
         Map<String, Object> data = new HashMap<>();
-        data.put("nodeStatus", this.nodeStatus());
+        data.put("nodeStatus", nodeStatusDao);
 
         Object result = this.requestApi.post(url, null, data);
         NodeStatusDaos nodeStatusDaos = (NodeStatusDaos) Converter
@@ -151,16 +126,22 @@ public class Node {
                     NodeStatusDao nodeStatusDao = (NodeStatusDao) Converter
                         .objToObj(data.get("nodeStatus"), new TypeReference<NodeStatusDao>() {
                         });
-                    NodeStatusDaos.setVersion(this.generatingVersion());
+                    NodeStatusDaos.updateVersion();
                     NodeStatusDaos.addNodeStatusDao(nodeStatusDao);
 
+                    String hostName = this.systemInfo.getHostName();
                     // init seed node
                     if (
                         !NodeStatusDaos
-                            .nodeSearch(this.nodeStatus().getHostName())
+                            .nodeSearch(hostName)
                             .isPresent()
                     ) {
-                        NodeStatusDaos.addNodeStatusDao(this.nodeStatus());
+                        NodeStatusDao addNodeStatusDao = new NodeStatusDao(
+                            this.systemInfo.getHostName(),
+                            this.systemInfo.getDiskTotalSize() - this.systemInfo.getDiskUseSize()
+                        );
+                        addNodeStatusDao.updateFileManage();
+                        NodeStatusDaos.addNodeStatusDao(addNodeStatusDao);
                     }
 
                     return ok().bodyValue(NodeStatusDaos.getNodeStatusAlls());
