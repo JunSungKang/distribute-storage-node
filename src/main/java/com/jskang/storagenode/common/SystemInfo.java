@@ -12,8 +12,8 @@ import org.slf4j.LoggerFactory;
 public class SystemInfo {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
-    private String localIpAddress = "";
-    private int port = -1;
+    private String localIpAddress = this.setLocalIpAddress();
+    private int port = StorageNodeApplication.getSettingPort();
 
     public String getHostName() {
         return this.getLocalIpAddress() + ":" + this.getPort();
