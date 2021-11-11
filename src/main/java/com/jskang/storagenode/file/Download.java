@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -33,9 +34,7 @@ public class Download {
             return ResponseResult.download(mapper, fileName);
         } else {
             LOG.error("request query 'fileName' empty.");
-            return ServerResponse.badRequest().body(
-                BodyInserters.fromProducer(Mono.just("{\"statusCode\": 400}"), String.class)
-            );
+            return ResponseResult.fail(HttpStatus.BAD_REQUEST);
         }
     }
 
