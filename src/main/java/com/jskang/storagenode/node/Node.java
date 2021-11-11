@@ -5,6 +5,13 @@ import com.jskang.storagenode.common.Converter;
 import com.jskang.storagenode.common.RequestApi;
 import com.jskang.storagenode.common.SystemInfo;
 import com.jskang.storagenode.response.ResponseResult;
+import com.jskang.storagenode.response.ResponseResult.ResponseData;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -30,23 +37,50 @@ public class Node {
     @Scheduled(fixedDelay = 5000)
     private void nodeRefresh() {
         if (NodeStatusDaos.getNodeStatusDaos().length > 1) {
+            boolean isChange = false;
             int random = new Random().nextInt(NodeStatusDaos.getNodeStatusDaos().length);
             NodeStatusDao[] nodeStatusDao = NodeStatusDaos.getNodeStatusDaos();
 
             String hostName = nodeStatusDao[random].getHostName();
-            Object data = this.requestApi.get(hostName + "/node/list");
-            if (data instanceof String && data.equals("connect fail")) {
+            ResponseData data = (ResponseData) Converter.objToObj(
+                this.requestApi.get(hostName + "/node/list"), new TypeReference<ResponseData>() {
+                });
+
+            // If there is no response.
+            if (data.getBody() instanceof String && data.equals("connect fail")) {
+                isChange = true;
                 NodeStatusDaos.updateVersion();
                 NodeStatusDaos.removeNodeStatusDaos(hostName);
                 LOG.info("Connect node remove [" + hostName + "]");
-            } else {
+            }
+            // if there is a response.
+            else {
                 NodeStatusDaos nodeStatusDaos =
-                    (NodeStatusDaos) Converter.objToObj(data, new TypeReference<NodeStatusDaos>() {
+                    (NodeStatusDaos) Converter.objToObj(data.getBody(), new TypeReference<NodeStatusDaos>() {
                     });
 
+                // If you have a higher version than yourself.
                 if (NodeStatusDaos.getVersion() < nodeStatusDaos.getVersion()) {
+                    isChange = true;
                     NodeStatusDaos.setVersion(nodeStatusDaos.getVersion());
                     NodeStatusDaos.setArrayNodeStatusDaos(nodeStatusDaos.getNodeStatusDaos());
+                }
+            }
+
+            // When node information is changed.
+            if (isChange) {
+                try {
+                    File file = Paths.get("data", "FileManage.fm").toFile();
+                    file.mkdirs();
+                    FileOutputStream out = new FileOutputStream(file);
+
+                    String json = Converter.objToJson(NodeStatusDaos.getNodeStatusAlls());
+                    out.write(json.getBytes(StandardCharsets.UTF_8));
+                    out.close();
+                } catch (FileNotFoundException e) {
+                    LOG.error(e.getMessage());
+                } catch (IOException e) {
+                    LOG.error(e.getMessage());
                 }
             }
         }
@@ -102,9 +136,12 @@ public class Node {
         Map<String, Object> data = new HashMap<>();
         data.put("nodeStatus", nodeStatusDao);
 
-        Object result = this.requestApi.post(url, null, data);
+        ResponseData result = (ResponseData) Converter.objToObj(
+            this.requestApi.post(url, null, data), new TypeReference<ResponseData>() {
+        });
+
         NodeStatusDaos nodeStatusDaos = (NodeStatusDaos) Converter
-            .objToObj(result, new TypeReference<NodeStatusDaos>() {
+            .objToObj(result.getBody(), new TypeReference<NodeStatusDaos>() {
             });
 
         NodeStatusDaos.setVersion(nodeStatusDaos.getVersion());

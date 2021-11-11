@@ -43,6 +43,14 @@ public class ResponseResult {
             this.header = header;
             this.body = body;
         }
+
+        public Header getHeader() {
+            return header;
+        }
+
+        public Object getBody() {
+            return body;
+        }
     }
 
 }
