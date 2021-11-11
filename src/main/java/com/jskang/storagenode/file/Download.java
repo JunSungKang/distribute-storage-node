@@ -1,11 +1,11 @@
 package com.jskang.storagenode.file;
 
+import com.jskang.storagenode.response.ResponseResult;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -30,11 +30,7 @@ public class Download {
             Resource resource = new FileSystemResource("upload\\" + fileName);
             Mono<Resource> mapper = Mono.just(resource);
 
-            Mono<ServerResponse> res = ServerResponse.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                    "attachment; filename=\"" + fileName + "\"")
-                .body(BodyInserters.fromProducer(mapper, Resource.class));
-            return res;
+            return ResponseResult.download(mapper, fileName);
         } else {
             LOG.error("request query 'fileName' empty.");
             return ServerResponse.badRequest().body(

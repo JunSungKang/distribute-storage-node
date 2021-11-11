@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FileManage {
@@ -25,8 +26,12 @@ public class FileManage {
      * @param fileKey file key (hash)
      * @return
      */
-    public static List<Path> getFilePosition(String fileKey) {
-        return fileManage.get(fileKey);
+    public static List<String> getFilePosition(String fileKey) {
+        List<String> positions = fileManage.get(fileKey).stream()
+            .map(path -> path.toString())
+            .collect(Collectors.toList());
+
+        return positions;
     }
 
     /**

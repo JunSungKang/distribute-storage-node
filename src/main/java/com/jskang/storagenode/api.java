@@ -4,18 +4,18 @@ import com.jskang.storagenode.file.Download;
 import com.jskang.storagenode.file.FileManage;
 import com.jskang.storagenode.file.Upload;
 import com.jskang.storagenode.node.Node;
-import java.nio.file.Path;
+import com.jskang.storagenode.response.ResponseResult;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.RequestPredicates;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
+import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
@@ -36,28 +36,22 @@ public class api {
                 request -> new Upload().fileUpload(request))
             .GET("file/position_info",
                 RequestPredicates.accept(MediaType.APPLICATION_JSON),
-                request -> {
-                    Optional<String> optionalFileName = request.queryParam("fileName");
-                    if (optionalFileName.isPresent()) {
-                        String fileName = optionalFileName.get();
-                        List<String> positions = (List<String>) FileManage
-                            .getFilePostionStream(fileName)
-                            .map(o -> ((Path) o).getFileName().toString())
-                            .collect(Collectors.toList());
-
-                        return ServerResponse.ok()
-                            .body(BodyInserters
-                                .fromProducer(Mono.just(positions), List.class));
-                    } else {
-                        return ServerResponse.badRequest().body(
-                            BodyInserters
-                                .fromProducer(Mono.just("{\"statusCode\": 400}"), String.class)
-                        );
-                    }
-                })
+                request -> filePosition(request))
             .GET("file/download",
                 RequestPredicates.accept(MediaType.APPLICATION_JSON),
                 request -> new Download().fileDownload(request))
             .build();
+    }
+
+    private Mono<ServerResponse> filePosition(ServerRequest request) {
+        Optional<String> optionalFileName = request.queryParam("fileName");
+        if (optionalFileName.isPresent()) {
+            String fileName = optionalFileName.get();
+            List<String> positions = FileManage.getFilePosition(fileName);
+
+            return ResponseResult.success(positions);
+        } else {
+            return ResponseResult.fail(HttpStatus.BAD_REQUEST);
+        }
     }
 }

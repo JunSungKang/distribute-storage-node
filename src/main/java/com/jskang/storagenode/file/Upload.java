@@ -1,21 +1,19 @@
 package com.jskang.storagenode.file;
 
-import static org.springframework.web.reactive.function.server.ServerResponse.badRequest;
-import static org.springframework.web.reactive.function.server.ServerResponse.ok;
-
 import com.jskang.storagenode.common.SystemInfo;
 import com.jskang.storagenode.node.NodeStatusDao;
 import com.jskang.storagenode.node.NodeStatusDaos;
+import com.jskang.storagenode.response.ResponseResult;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.web.reactive.function.BodyExtractors;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
@@ -44,11 +42,13 @@ public class Upload {
                         FilePart filePart = (FilePart) map.get("file");
                         Path path = Paths.get("upload\\" + filePart.filename());
                         FileManage.addPosition(fileName, path);
-                        return filePart.transferTo(path);
+                        return filePart
+                            .transferTo(path)
+                            .doOnError(
+                                throwable -> ResponseResult.fail(HttpStatus.INTERNAL_SERVER_ERROR))
+                            .doOnSuccess(unused -> ResponseResult.success(""));
                     }
-                    return badRequest().body(
-                        BodyInserters.fromProducer(Mono.just("{\"statusCode\": 500}"), String.class)
-                    );
+                    return ResponseResult.fail(HttpStatus.INTERNAL_SERVER_ERROR);
                 })
                 .doOnSuccess(o -> {
                     String hostName = this.systemInfo.getHostName();
@@ -65,13 +65,10 @@ public class Upload {
                 .doOnError(throwable -> {
                     LOG.error(throwable.getMessage());
                 })
-                .then(ok().body(
-                    BodyInserters.fromProducer(Mono.just("{\"statusCode\": 200}"), String.class)));
+                .then(ResponseResult.success(""));
         } else {
             LOG.error("request query 'fileName' empty.");
-            return ServerResponse.badRequest().body(
-                BodyInserters.fromProducer(Mono.just("{\"statusCode\": 400}"), String.class)
-            );
+            return ResponseResult.fail(HttpStatus.BAD_REQUEST);
         }
     }
 }

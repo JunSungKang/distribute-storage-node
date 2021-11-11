@@ -1,17 +1,16 @@
 package com.jskang.storagenode.node;
 
-import static org.springframework.web.reactive.function.server.ServerResponse.ok;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.jskang.storagenode.common.Converter;
 import com.jskang.storagenode.common.RequestApi;
 import com.jskang.storagenode.common.SystemInfo;
-import java.util.ArrayList;
+import com.jskang.storagenode.response.ResponseResult;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -59,7 +58,7 @@ public class Node {
      * @return all nodes.
      */
     public Mono<ServerResponse> getNodeLists() {
-        return ok().bodyValue(NodeStatusDaos.getNodeStatusAlls());
+        return ResponseResult.success(NodeStatusDaos.getNodeStatusAlls());
     }
 
     /**
@@ -76,9 +75,9 @@ public class Node {
         nodeStatusDao.updateFileManage();
 
         if (nodeStatusDao == null) {
-            return ok().bodyValue(new ArrayList<>());
+            return ResponseResult.fail(HttpStatus.NOT_FOUND);
         } else {
-            return ok().bodyValue(nodeStatusDao);
+            return ResponseResult.success(nodeStatusDao);
         }
     }
 
@@ -144,10 +143,11 @@ public class Node {
                         NodeStatusDaos.addNodeStatusDao(addNodeStatusDao);
                     }
 
-                    return ok().bodyValue(NodeStatusDaos.getNodeStatusAlls());
+                    return ResponseResult.success(NodeStatusDaos.getNodeStatusAlls());
                 });
         } catch (Exception e) {
-            return ServerResponse.badRequest().bodyValue(e.getMessage());
+            LOG.error(e.getMessage());
+            return ResponseResult.fail(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
