@@ -165,21 +165,6 @@ public class Node {
                     NodeStatusDaos.updateVersion();
                     NodeStatusDaos.addNodeStatusDao(nodeStatusDao);
 
-                    String hostName = this.systemInfo.getHostName();
-                    // init seed node
-                    if (
-                        !NodeStatusDaos
-                            .nodeSearch(hostName)
-                            .isPresent()
-                    ) {
-                        NodeStatusDao addNodeStatusDao = new NodeStatusDao(
-                            this.systemInfo.getHostName(),
-                            this.systemInfo.getDiskTotalSize() - this.systemInfo.getDiskUseSize()
-                        );
-                        addNodeStatusDao.updateFileManage();
-                        NodeStatusDaos.addNodeStatusDao(addNodeStatusDao);
-                    }
-
                     return ResponseResult.success(NodeStatusDaos.getNodeStatusAlls());
                 });
         } catch (Exception e) {

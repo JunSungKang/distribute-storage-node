@@ -1,6 +1,9 @@
 package com.jskang.storagenode;
 
+import com.jskang.storagenode.common.SystemInfo;
 import com.jskang.storagenode.node.Node;
+import com.jskang.storagenode.node.NodeStatusDao;
+import com.jskang.storagenode.node.NodeStatusDaos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +50,22 @@ public class StorageNodeApplication implements ApplicationListener<ApplicationSt
             } catch (Exception e) {
                 LOG.error(e.getMessage());
                 System.exit(1);
+            }
+        } else {
+            SystemInfo systemInfo = new SystemInfo();
+            String hostName = systemInfo.getHostName();
+            // init seed node
+            if (
+                !NodeStatusDaos
+                    .nodeSearch(hostName)
+                    .isPresent()
+            ) {
+                NodeStatusDao addNodeStatusDao = new NodeStatusDao(
+                    systemInfo.getHostName(),
+                    systemInfo.getDiskTotalSize() - systemInfo.getDiskUseSize()
+                );
+                addNodeStatusDao.updateFileManage();
+                NodeStatusDaos.addNodeStatusDao(addNodeStatusDao);
             }
         }
 
