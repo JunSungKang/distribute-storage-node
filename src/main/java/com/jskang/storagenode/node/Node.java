@@ -56,8 +56,9 @@ public class Node {
             // if there is a response.
             else {
                 NodeStatusDaos nodeStatusDaos =
-                    (NodeStatusDaos) Converter.objToObj(data.getBody(), new TypeReference<NodeStatusDaos>() {
-                    });
+                    (NodeStatusDaos) Converter
+                        .objToObj(data.getBody(), new TypeReference<NodeStatusDaos>() {
+                        });
 
                 // If you have a higher version than yourself.
                 if (NodeStatusDaos.getVersion() < nodeStatusDaos.getVersion()) {
@@ -138,7 +139,7 @@ public class Node {
 
         ResponseData result = (ResponseData) Converter.objToObj(
             this.requestApi.post(url, null, data), new TypeReference<ResponseData>() {
-        });
+            });
 
         NodeStatusDaos nodeStatusDaos = (NodeStatusDaos) Converter
             .objToObj(result.getBody(), new TypeReference<NodeStatusDaos>() {
