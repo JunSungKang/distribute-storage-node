@@ -17,4 +17,12 @@ public class Header {
         this.code = code;
         this.message = message;
     }
+
+    @Override
+    public String toString() {
+        return "Header{" +
+            "code=" + code +
+            ", message='" + message + '\'' +
+            '}';
+    }
 }

@@ -51,6 +51,14 @@ public class ResponseResult {
         public Object getBody() {
             return body;
         }
+
+        @Override
+        public String toString() {
+            return "ResponseData{" +
+                "header=" + header +
+                ", body=" + body +
+                '}';
+        }
     }
 
 }
