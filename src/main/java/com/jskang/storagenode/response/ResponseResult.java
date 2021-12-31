@@ -15,12 +15,12 @@ public class ResponseResult {
 
     public static Mono<ServerResponse> success(Object data) {
         Header header = new Header(HttpStatus.OK.value(), HttpStatus.OK.getReasonPhrase());
-        return ok().bodyValue(new ResponseData(header, data));
+        return ServerResponse.ok().bodyValue(new ResponseData(header, data));
     }
 
     public static Mono<ServerResponse> fail(HttpStatus httpStatus) {
         Header header = new Header(httpStatus.value(), httpStatus.getReasonPhrase());
-        return ok().bodyValue(new ResponseData(header, ""));
+        return ServerResponse.status(httpStatus).bodyValue(new ResponseData(header, ""));
     }
 
     public static Mono<ServerResponse> download(Mono<Resource> resourceMono, String fileName) {
