@@ -20,9 +20,9 @@ public class SystemInfo {
     }
 
     /**
-     * get local ip address.
+     * 노드 자기 자신의 아이피 주소 확인
      *
-     * @return setting ip.
+     * @return 노드 아이피
      */
     public String getLocalIpAddress() {
         if (this.localIpAddress.isBlank()) {
@@ -32,18 +32,18 @@ public class SystemInfo {
     }
 
     /**
-     * get local port.
+     * 현재 사용중인 포트 확인
      *
-     * @return setting port.
+     * @return 노드 포트
      */
     public int getPort() {
         return StorageNodeApplication.getSettingPort();
     }
 
     /**
-     * Server's local IP address lookup
+     * 서버의 아이피 주소 목록을 불러온 후, 아이피 주소 확인
      *
-     * @return Returns the IP Address.
+     * @return 외부에서 접속가능한 아이피 주소를 반환
      */
     private String setLocalIpAddress() {
         try {
@@ -71,9 +71,9 @@ public class SystemInfo {
     }
 
     /**
-     * get disk total size.
+     * 디스크 전체 용량 확인
      *
-     * @return disk total size.
+     * @return 디스크 전체 용량
      */
     public double getDiskTotalSize() {
         File[] drives = File.listRoots();
@@ -81,9 +81,9 @@ public class SystemInfo {
     }
 
     /**
-     * get disk use size.
+     * 디스크 현재 사용중인 용량 확인
      *
-     * @return disk use size.
+     * @return 사용중인 디스크 용량
      */
     public double getDiskUseSize() {
         File[] drives = File.listRoots();

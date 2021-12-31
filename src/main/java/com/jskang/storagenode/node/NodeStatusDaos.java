@@ -31,28 +31,38 @@ public class NodeStatusDaos {
     }
 
     /**
-     * Generating version
+     * 새로운 버전으로 갱신
      */
     public static void updateVersion() {
         version = new Date().getTime();
     }
 
     /**
-     * Get version max value.
+     * 새로 받은 버전이 현재 버전보다 최신버전인지 확인
      *
-     * @param version Generating version.
-     * @return
+     * @param version 비교할 버전
+     * @return 둘 중 가장 최신버전을 반환
      */
     public static long compareToVersion(int version) {
         return version > version ? version : version;
     }
 
+    /**
+     * 모든 노드 정보 조회
+     *
+     * @return 모든 노드 정보를 Array 형태로 반환 (버전 정보는 포함하지 않음)
+     */
     public static NodeStatusDao[] getNodeStatusDaos() {
         NodeStatusDao[] result = new NodeStatusDao[nodeStatusDaos.size()];
         result = nodeStatusDaos.toArray(result);
         return result;
     }
 
+    /**
+     * 모든 노드 정보를 현재 버전 정보화 함께 조회
+     *
+     * @return 모든 노드 정보를 버전 정보와 함께 반환
+     */
     public static Map<String, Object> getNodeStatusAlls() {
         Map<String, Object> result = new HashMap<>();
         result.put("version", version);
@@ -60,21 +70,28 @@ public class NodeStatusDaos {
         return result;
     }
 
+    /**
+     * 노드 추가
+     *
+     * @param nodeStatusDao 추가할 노드 정보
+     */
     public static void addNodeStatusDao(NodeStatusDao nodeStatusDao) {
         nodeStatusDaos.add(nodeStatusDao);
     }
 
     /**
-     * NodeStatusDaos overwrite.
+     * 현재 추가된 모든 노드 정보를 새로운 노드 정보로 덮어쓰기
+     * (최신화된 노드 정보를 덮어쓰는데 사용)
      *
-     * @param nodeStatusDaos Input type linkedList.
+     * @param nodeStatusDaos 새로운 노드 정보
      */
     public static void setNodeStatusDaos(List<NodeStatusDao> nodeStatusDaos) {
         nodeStatusDaos = nodeStatusDaos;
     }
 
     /**
-     * NodeStatusDaos overwrite.
+     * 현재 추가된 모든 노드 정보를 새로운 노드 정보로 덮어쓰기
+     * (최신화된 노드 정보를 덮어쓰는데 사용)
      *
      * @param arrayNodeStatusDaos Input type NodeStatusDao Array.
      */
@@ -87,9 +104,9 @@ public class NodeStatusDaos {
     }
 
     /**
-     * Connect node remove.
+     * 노드 정보를 삭제
      *
-     * @param hostName remove is hostname.
+     * @param hostName 삭제할 노드의 호스트명
      */
     public static void removeNodeStatusDaos(String hostName) {
         Optional<NodeStatusDao> nodeStatusDao = nodeSearch(hostName);
@@ -99,11 +116,11 @@ public class NodeStatusDaos {
     }
 
     /**
-     * Update node status.
+     * 특정 노드 상태 정보 갱신
      *
-     * @param hostName      input hostname.
-     * @param nodeStatusDao nodeStatusDao.
-     * @return Success if idx value greater than -1, failure otherwise.
+     * @param hostName      갱신할 노드의 호스트명
+     * @param nodeStatusDao 노드의 상태 정보
+     * @return 상태 정보 갱신에 성공하면 -1보다 큰 값, 실패한 경우 음수 값 반환
      */
     public static int editNodeStatusDaos(String hostName, NodeStatusDao nodeStatusDao) {
         int idx = -1;
@@ -125,10 +142,10 @@ public class NodeStatusDaos {
     }
 
     /**
-     * is node check.
+     * 특정 노드 상태 정보 확인
      *
-     * @param hostName search hostname.
-     * @return if true search count > 1, others search count = 0.
+     * @param hostName 확인할 노드의 호스트명
+     * @return 노드가 존재하지 않는 경우 isPresent()를 통해서 false 반환, 존재하는 경우에는 true를 반환
      */
     public static Optional<NodeStatusDao> nodeSearch(String hostName) {
         return nodeStatusDaos.stream()

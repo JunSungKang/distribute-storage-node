@@ -24,10 +24,10 @@ public class Upload {
     private SystemInfo systemInfo = new SystemInfo();
 
     /**
-     * File upload
+     * 파일 업로드 요청시, 파일 분산 후 업로드 기능
      *
-     * @param request upload file metadata
-     * @return if upload ok 'success', others 'fail'
+     * @param request 업로드 파일 메타 데이터
+     * @return 업로드 성공시 200 (SUCCESS) 반환, 실패시 500(INTERNAL_SERVER_ERROR) 반환.
      */
     public Mono<ServerResponse> fileUpload(ServerRequest request) {
         Optional<String> optionalFileName = request.queryParam("fileName");

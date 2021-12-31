@@ -32,7 +32,7 @@ public class Node {
     private SystemInfo systemInfo = new SystemInfo();
 
     /**
-     * Node refresh.
+     * 주변 노드에 노드 정보를 요청하여 가장 최신화된 노드의 정보로 갱신
      */
     @Scheduled(fixedDelay = 5000)
     private void nodeRefresh() {
@@ -88,18 +88,18 @@ public class Node {
     }
 
     /**
-     * Search the list of all registered nodes.
+     * 등록된 모든 노드의 목록을 검색
      *
-     * @return all nodes.
+     * @return 등록된 노드 목록
      */
     public Mono<ServerResponse> getNodeLists() {
         return ResponseResult.success(NodeStatusDaos.getNodeStatusAlls());
     }
 
     /**
-     * Current own node disk status information inquiry
+     * 현재 자체 노드 디스크 상태 정보 조회
      *
-     * @return Returns the host name, current disk usage, and total disk size.
+     * @return 호스트명, 현재 디스크 남은 용량, 전체 디스크 용량을 반환
      */
     public Mono<ServerResponse> getNodeStatus() {
         LOG.info("Select node information.");
@@ -117,7 +117,7 @@ public class Node {
     }
 
     /**
-     * Node join request
+     * 새로운 클러스터에 노드 가입 요청
      *
      * @throws Exception
      */
@@ -150,10 +150,10 @@ public class Node {
     }
 
     /**
-     * Add the node's network participation list
+     * 현재 클러스터에 가입 요청한 노드를 추가 
      *
-     * @param request restAPI post data.
-     * @return if success, node status info. other case exception message.
+     * @param request 노드 가입 요청에 필요한 메타데이터
+     * @return 노드가 가입에 성공하면 가입된 모든 노드 상태 정보, 가입에 실패하면 익셉션 메세지를 반환
      */
     public Mono<ServerResponse> networkJoin(ServerRequest request) {
         try {

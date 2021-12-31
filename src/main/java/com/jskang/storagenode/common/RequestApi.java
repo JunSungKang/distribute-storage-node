@@ -24,10 +24,21 @@ public class RequestApi {
         "Content-type", "application/json;charset=UTF-8"
     );
 
+    /**
+     * RestAPI GET 통신 요청, 헤더영역을 기본값으로만 이용할 때 사용
+     * @param url 요청할 URL
+     * @return 요청한 서버에서 응답한 응답 결과
+     */
     public Object get(String url) {
         return this.get(url, null);
     }
 
+    /**
+     * RestAPI GET 통신 요청, 헤더영역을 기본값 + 커스텀 헤더가 필요할 때 사용
+     * @param url 요청할 URL
+     * @param headers 요청할 때 포함시킬 헤더 정보
+     * @return 요청한 서버에서 응답한 응답 결과
+     */
     public Object get(String url, String[] headers) {
 
         // Common headers setting.
@@ -66,6 +77,14 @@ public class RequestApi {
         }
     }
 
+    /**
+     * RestAPI POST 통신 요청, 헤더영역을 기본값 + 커스텀 헤더가 필요할 때 사용
+     * @param url 요청할 URL
+     * @param headers 요청할 때 포함시킬 헤더 정보
+     * @param data 요청할 때 포함시킬 데이터
+     * @return 요청한 서버에서 응답한 응답 결과
+     * @throws Exception
+     */
     public Object post(String url, String[] headers, Map<?, ?> data) throws Exception {
         // Common headers setting.
         if (headers != null) {

@@ -16,9 +16,9 @@ public class Download {
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
 
     /**
-     * File download
+     * 파일 다운로드 요청시 파일 다운로드 기능
      *
-     * @return if upload ok 'success', others 'fail'
+     * @return 다운로드에 성공하면 다운로드할 파일을 반환, 실패할 경우 400(BAD_REQUEST) 반환
      */
     public Mono<ServerResponse> fileDownload(ServerRequest request) {
         Optional<String> optionalFileName = request.queryParam("fileName");
