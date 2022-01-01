@@ -1,5 +1,9 @@
 package com.jskang.storagenode.common;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.jskang.storagenode.response.Header;
+import com.jskang.storagenode.response.ResponseResult;
+import com.jskang.storagenode.response.ResponseResult.ResponseData;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
@@ -14,6 +18,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.server.ServerResponse;
 
 public class RequestApi {
 
@@ -71,9 +77,10 @@ public class RequestApi {
         }
 
         if (result.equals("")) {
-            return "connect fail";
+            Header header = new Header(HttpStatus.REQUEST_TIMEOUT.value(), HttpStatus.REQUEST_TIMEOUT.getReasonPhrase());
+            return new ResponseResult.ResponseData(header, null);
         } else {
-            return Converter.jsonToMap(result);
+            return Converter.jsonToObj(result, new TypeReference<ResponseData>(){});
         }
     }
 
@@ -121,6 +128,11 @@ public class RequestApi {
             LOG.error(e.getMessage());
         }
 
-        return Converter.jsonToMap(result);
+        if (result.equals("")) {
+            Header header = new Header(HttpStatus.REQUEST_TIMEOUT.value(), HttpStatus.REQUEST_TIMEOUT.getReasonPhrase());
+            return new ResponseResult.ResponseData(header, null);
+        } else {
+            return Converter.jsonToObj(result, new TypeReference<ResponseData>(){});
+        }
     }
 }
