@@ -18,6 +18,14 @@ public class Converter {
         }
     }
 
+    public static Object jsonToObj(String json, TypeReference typeReference) {
+        try {
+            return mapper.readValue(json, typeReference);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e.getMessage());
+        }
+    }
+
     public static Object objToObj(Object json, TypeReference typeReference) {
         return mapper.convertValue(json, typeReference);
     }

@@ -4,6 +4,7 @@ import static org.springframework.web.reactive.function.server.ServerResponse.ok
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
+import java.io.Serializable;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,14 +31,14 @@ public class ResponseResult {
     }
 
     @JsonRootName("response")
-    public static class ResponseData {
+    public static class ResponseData implements Serializable {
 
         @JsonProperty("header")
         private Header header;
         @JsonProperty("body")
         private Object body;
 
-        private ResponseData(
+        public ResponseData(
             @JsonProperty("header") Header header,
             @JsonProperty("body") Object body) {
             this.header = header;

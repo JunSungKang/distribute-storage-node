@@ -18,6 +18,14 @@ public class Header {
         this.message = message;
     }
 
+    public int getCode() {
+        return code;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
     @Override
     public String toString() {
         return "Header{" +

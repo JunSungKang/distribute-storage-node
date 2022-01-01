@@ -4,6 +4,8 @@ import com.jskang.storagenode.common.SystemInfo;
 import com.jskang.storagenode.node.Node;
 import com.jskang.storagenode.node.NodeStatusDao;
 import com.jskang.storagenode.node.NodeStatusDaos;
+import java.io.File;
+import java.nio.file.Paths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +32,13 @@ public class StorageNodeApplication implements ApplicationListener<ApplicationSt
     private static int settingPort = 8080;
 
     public static void main(String[] args) {
+        // 데이터 파일 생성
+        File file = Paths.get("data").toFile();
+        if (!file.exists()) {
+            LOG.info("Create FileManage.fm");
+            file.mkdirs();
+        }
+
         SpringApplication.run(StorageNodeApplication.class, args);
         LOG.info("API Server run completed.");
     }

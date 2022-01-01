@@ -47,10 +47,11 @@ public class Node {
                 });
 
             // If there is no response.
-            if (data.getBody() instanceof String && data.equals("connect fail")) {
+            if (data.getHeader().getCode() != 200) {
                 isChange = true;
                 NodeStatusDaos.updateVersion();
                 NodeStatusDaos.removeNodeStatusDaos(hostName);
+                LOG.error(data.getHeader().getMessage());
                 LOG.info("Connect node remove [" + hostName + "]");
             }
             // if there is a response.
@@ -72,7 +73,6 @@ public class Node {
             if (isChange) {
                 try {
                     File file = Paths.get("data", "FileManage.fm").toFile();
-                    file.mkdirs();
                     FileOutputStream out = new FileOutputStream(file);
 
                     String json = Converter.objToJson(NodeStatusDaos.getNodeStatusAlls());
@@ -166,7 +166,22 @@ public class Node {
                     NodeStatusDaos.updateVersion();
                     NodeStatusDaos.addNodeStatusDao(nodeStatusDao);
 
-                    return ResponseResult.success(NodeStatusDaos.getNodeStatusAlls());
+                    // 가입 요청 허락 후, 노드 목록 파일 저장
+                    Map<String, Object> nodeStatusAlls = NodeStatusDaos.getNodeStatusAlls();
+                    try {
+                        File file = Paths.get("data", "FileManage.fm").toFile();
+                        FileOutputStream out = new FileOutputStream(file);
+
+                        String json = Converter.objToJson(nodeStatusAlls);
+                        out.write(json.getBytes(StandardCharsets.UTF_8));
+                        out.close();
+                    } catch (FileNotFoundException e) {
+                        LOG.error(e.getMessage());
+                    } catch (IOException e) {
+                        LOG.error(e.getMessage());
+                    }
+
+                    return ResponseResult.success(nodeStatusAlls);
                 });
         } catch (Exception e) {
             LOG.error(e.getMessage());

@@ -2,6 +2,7 @@ package com.jskang.storagenode.node;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -9,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class NodeStatusDaos {
+public class NodeStatusDaos implements Serializable {
 
     private static long version = 0;
     private static List<NodeStatusDao> nodeStatusDaos = new LinkedList<>();

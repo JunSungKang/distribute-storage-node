@@ -3,12 +3,13 @@ package com.jskang.storagenode.node;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jskang.storagenode.file.FileManage;
+import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class NodeStatusDao {
+public class NodeStatusDao implements Serializable {
 
     private String hostName;
     private double freeSize;
