@@ -1,13 +1,19 @@
 package com.jskang.storagenode.file;
 
+import com.jskang.storagenode.response.ResponseResult;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Mono;
 
 public class FileManage {
 
@@ -18,6 +24,17 @@ public class FileManage {
      */
     public static Map<String, List<Path>> getAllFileManage() {
         return fileManage;
+    }
+
+    /**
+     * 업로드된 파일 목록 조회
+     */
+    public static Mono<ServerResponse> getFileList() {
+        Set<String> fileList = new HashSet<>();
+        for (Entry<String, List<Path>> fileName : fileManage.entrySet()) {
+            fileList.add( fileName.getKey() );
+        }
+        return ResponseResult.success(fileList);
     }
 
     /**

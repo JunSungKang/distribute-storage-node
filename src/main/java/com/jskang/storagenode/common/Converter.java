@@ -3,6 +3,8 @@ package com.jskang.storagenode.common;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -30,10 +32,17 @@ public class Converter {
         return mapper.convertValue(json, typeReference);
     }
 
+    public static Object fileToObj(File json, TypeReference typeReference) {
+        try {
+            return mapper.readValue(json, new TypeReference<Map>() {});
+        } catch (IOException e) {
+            throw new IllegalStateException(e.getMessage());
+        }
+    }
+
     public static Map jsonToMap(String json) {
         try {
-            return mapper.readValue(json, new TypeReference<Map>() {
-            });
+            return mapper.readValue(json, new TypeReference<Map>() {});
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e.getMessage());
         }
@@ -41,8 +50,7 @@ public class Converter {
 
     public static List jsonToList(String json) {
         try {
-            return mapper.readValue(json, new TypeReference<List>() {
-            });
+            return mapper.readValue(json, new TypeReference<List>() {});
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e.getMessage());
         }

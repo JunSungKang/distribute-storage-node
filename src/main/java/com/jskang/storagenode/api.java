@@ -40,6 +40,9 @@ public class api {
             .GET("file/download",
                 RequestPredicates.accept(MediaType.APPLICATION_JSON),
                 request -> new Download().fileDownload(request))
+            .GET("file/list",
+                RequestPredicates.accept(MediaType.APPLICATION_JSON),
+                request -> FileManage.getFileList())
             .build();
     }
 
