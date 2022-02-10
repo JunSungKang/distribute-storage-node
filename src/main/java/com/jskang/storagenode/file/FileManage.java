@@ -1,7 +1,12 @@
 package com.jskang.storagenode.file;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.jskang.storagenode.common.Converter;
+import com.jskang.storagenode.common.SystemInfo;
 import com.jskang.storagenode.response.ResponseResult;
+import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -9,14 +14,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 public class FileManage {
 
+    private static Logger LOG = LoggerFactory.getLogger(FileManage.class);
     private static Map<String, List<Path>> fileManage = new HashMap<>();
 
     /**
@@ -32,7 +41,7 @@ public class FileManage {
     public static Mono<ServerResponse> getFileList() {
         Set<String> fileList = new HashSet<>();
         for (Entry<String, List<Path>> fileName : fileManage.entrySet()) {
-            fileList.add( fileName.getKey() );
+            fileList.add(fileName.getKey());
         }
         return ResponseResult.success(fileList);
     }
@@ -105,5 +114,32 @@ public class FileManage {
      */
     public static boolean isFile(String fileKey) {
         return fileManage.get(fileKey) == null ? false : true;
+    }
+
+    public static boolean loadFileManager() {
+        LOG.info("FileManager.fm read.");
+
+        File file = Paths.get("data", "FileManage.fm").toFile();
+        Map<String, Object> data = (Map) Converter.fileToObj(file, new TypeReference<Map>() {
+        });
+        List<Map<String, Object>> nodeList = (List<Map<String, Object>>) Converter.objToObj(
+            data.get("nodeStatusDaos"), new TypeReference<List<Map<String, Object>>>() {
+            }
+        );
+
+        // 자기 자신의 호스트네임 얻어오기
+        SystemInfo systemInfo = new SystemInfo();
+        String hostName = systemInfo.getHostName();
+
+        Optional<Map<String, Object>> optional = nodeList.stream()
+            .filter(node -> node.get("hostName").equals(hostName))
+            .findFirst();
+
+        if (optional.isPresent()) {
+            fileManage.putAll((Map<String, List<Path>>) optional.get().get("fileManage"));
+            return true;
+        } else {
+            return false;
+        }
     }
 }
