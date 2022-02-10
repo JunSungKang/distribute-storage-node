@@ -121,7 +121,7 @@ public class Node {
      *
      * @throws Exception
      */
-    public void networkJoinRequest() throws Exception {
+    public Mono<ServerResponse> networkJoinRequest() throws Exception {
         String localIp = this.systemInfo.getLocalIpAddress();
 
         String url = "192.168.55.23:"
@@ -147,6 +147,8 @@ public class Node {
 
         NodeStatusDaos.setVersion(nodeStatusDaos.getVersion());
         NodeStatusDaos.setArrayNodeStatusDaos(nodeStatusDaos.getNodeStatusDaos());
+
+        return ResponseResult.success(nodeStatusDaos);
     }
 
     /**

@@ -19,6 +19,11 @@ public class ResponseResult {
         return ServerResponse.ok().bodyValue(new ResponseData(header, data));
     }
 
+    public static Mono<ServerResponse> fail(HttpStatus httpStatus, String message) {
+        Header header = new Header(httpStatus.value(), httpStatus.getReasonPhrase());
+        return ServerResponse.status(httpStatus).bodyValue(new ResponseData(header, message));
+    }
+
     public static Mono<ServerResponse> fail(HttpStatus httpStatus) {
         Header header = new Header(httpStatus.value(), httpStatus.getReasonPhrase());
         return ServerResponse.status(httpStatus).bodyValue(new ResponseData(header, ""));
