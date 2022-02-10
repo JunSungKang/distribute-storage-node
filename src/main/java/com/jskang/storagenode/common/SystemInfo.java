@@ -53,9 +53,6 @@ public class SystemInfo {
             final DatagramSocket socket = new DatagramSocket();
             socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
             return socket.getLocalAddress().getHostAddress();
-
-            /*InetAddress local = InetAddress.getLocalHost();
-            return local.getHostAddress();*/
         } catch (UnknownHostException | SocketException ex) {
             LOG.error("Select the hostname or ip address failed.");
             return "";
