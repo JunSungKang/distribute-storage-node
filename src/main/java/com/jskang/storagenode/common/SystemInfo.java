@@ -2,10 +2,10 @@ package com.jskang.storagenode.common;
 
 import com.jskang.storagenode.StorageNodeApplication;
 import java.io.File;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.util.Enumeration;
+import java.net.UnknownHostException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,25 +49,17 @@ public class SystemInfo {
         try {
             LOG.info("Select the hostname or ip address.");
 
-            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
-                en.hasMoreElements(); ) {
-                NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses();
-                    enumIpAddr.hasMoreElements(); ) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress()
-                        && inetAddress
-                        .isSiteLocalAddress()) {
-                        return inetAddress.getHostAddress();
-                    }
-                }
-            }
-        } catch (SocketException ex) {
+            // 자신의 IP 출력
+            final DatagramSocket socket = new DatagramSocket();
+            socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+            return socket.getLocalAddress().getHostAddress();
+
+            /*InetAddress local = InetAddress.getLocalHost();
+            return local.getHostAddress();*/
+        } catch (UnknownHostException | SocketException ex) {
             LOG.error("Select the hostname or ip address failed.");
             return "";
         }
-
-        return "";
     }
 
     /**
