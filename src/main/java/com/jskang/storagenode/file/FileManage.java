@@ -53,9 +53,11 @@ public class FileManage {
      * @return 분산되어 저장된 서버 목록
      */
     public static List<String> getFilePosition(String fileKey) {
-        List<String> positions = fileManage.get(fileKey).stream()
-            .map(path -> path.toString())
-            .collect(Collectors.toList());
+        List<String> positions = new ArrayList<>();
+        int size = fileManage.get(fileKey).size();
+        for (int i=0; i<size; i++) {
+            positions.add(String.valueOf(fileManage.get(fileKey).get(i)));
+        }
 
         return positions;
     }
