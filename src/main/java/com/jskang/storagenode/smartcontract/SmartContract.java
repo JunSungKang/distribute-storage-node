@@ -1,9 +1,12 @@
 package com.jskang.storagenode.smartcontract;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.admin.Admin;
+import org.web3j.protocol.admin.methods.response.PersonalUnlockAccount;
 import org.web3j.protocol.http.HttpService;
 
 public class SmartContract {
@@ -45,5 +48,18 @@ public class SmartContract {
 
     public Web3j getWeb3j() {
         return this.web3j;
+    }
+
+    /**
+     *
+     * @param address wallet address
+     * @param password waller password
+     * @return if unlock success true, the other false.
+     * @throws IOException
+     */
+    public boolean unlockAccount(String address, String password) throws IOException {
+        Admin admin = Admin.build(new HttpService(host));
+        PersonalUnlockAccount personalUnlockAccount = admin.personalUnlockAccount(address, password).send();
+        return personalUnlockAccount.accountUnlocked();
     }
 }
