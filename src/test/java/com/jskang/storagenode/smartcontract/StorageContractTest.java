@@ -27,23 +27,23 @@ import org.web3j.utils.Numeric;
 class StorageContractTest {
 
     private SmartContract smartContract;
-    private String adminAddress = "0x779eb887a63efef51db5f16da4e42aa95297b119";
+    private String adminAddress = "0x4161e78793712124b5653cE6a1d592B64B654b72";
     private String adminPassword = "1234567890";
-    private String contractAddress = "0x2957187403769b0e175a7f5833971B09F8717b5f";
-    Bytes32 bytes32;
+    private String contractAddress = "0x571fDa89282F3C26c5F744bFEB4cad9101b82E47";
 
     @BeforeEach
     void setUp() {
-        this.smartContract = new SmartContract("192.168.56.1", "8545");
+        this.smartContract = new SmartContract("127.0.0.1", "8545");
         this.smartContract.connection();
-
-        String rawInput = "0x0000000000000000000000000000000000000000000000000000000000000099";
-        byte[] rawInputbytes = Numeric.hexStringToByteArray(rawInput);
-        this.bytes32 = new Bytes32(rawInputbytes);
     }
 
     @Test
     public void getFileHash() throws IOException {
+        // 0. 데이터 생성
+        String rawInput = "0x0000000000000000000000000000000000000000000000000000000000000000";
+        byte[] rawInputbytes = Numeric.hexStringToByteArray(rawInput);
+        Bytes32 bytes32 = new Bytes32(rawInputbytes);
+
         // 1. ethereum을 호출할 함수 생성
         Function function = new Function("getFileHash",
             Arrays.asList(bytes32),
@@ -82,10 +82,26 @@ class StorageContractTest {
     @Test
     public void setFileHashValue() throws IOException, InterruptedException, ExecutionException {
         // 테스트용으로 0x00000000000000000000000000000000 를 키 값으로 진행
+        // 0. 데이터 생성
+        String rawInput = "0x0000000000000000000000000000000000000000000000000000000000000000";
+        byte[] rawInputbytes = Numeric.hexStringToByteArray(rawInput);
+        Bytes32 bytes32 = new Bytes32(rawInputbytes);
+
+        String rawInput_1 = "0x4000000000000000000000000000000000000000000000000000000000000000";
+        byte[] rawInputbytes_1 = Numeric.hexStringToByteArray(rawInput_1);
+        Bytes32 bytes32_1 = new Bytes32(rawInputbytes_1);
+
+        String rawInput_2 = "0x5000000000000000000000000000000000000000000000000000000000000000";
+        byte[] rawInputbytes_2 = Numeric.hexStringToByteArray(rawInput_2);
+        Bytes32 bytes32_2 = new Bytes32(rawInputbytes_2);
+
+        String rawInput_3 = "0x6000000000000000000000000000000000000000000000000000000000000000";
+        byte[] rawInputbytes_3 = Numeric.hexStringToByteArray(rawInput_3);
+        Bytes32 bytes32_3 = new Bytes32(rawInputbytes_3);
 
         // 1. ethereum을 호출할 함수 생성
-        Array sourceIp = new DynamicArray(Bytes32.class, bytes32, bytes32, bytes32);
-        Array fileHash = new DynamicArray(Bytes32.class, bytes32, bytes32, bytes32);
+        Array sourceIp = new DynamicArray(Bytes32.class, bytes32_1, bytes32_2, bytes32_3);
+        Array fileHash = new DynamicArray(Bytes32.class, bytes32_1, bytes32_2, bytes32_3);
         Function function = new Function("setFileHashValue",
             Arrays.asList( bytes32, sourceIp, fileHash),
             Collections.emptyList());
