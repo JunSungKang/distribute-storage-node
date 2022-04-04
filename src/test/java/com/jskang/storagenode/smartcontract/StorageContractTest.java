@@ -29,7 +29,7 @@ class StorageContractTest {
     private SmartContract smartContract;
     private String adminAddress = "0x4161e78793712124b5653cE6a1d592B64B654b72";
     private String adminPassword = "1234567890";
-    private String contractAddress = "0x571fDa89282F3C26c5F744bFEB4cad9101b82E47";
+    private String contractAddress = "0xbE587c126465137aB58388610EC453d4670924BD";
 
     @BeforeEach
     void setUp() {
