@@ -1,5 +1,6 @@
 package com.jskang.storagenode;
 
+import com.jskang.storagenode.common.CommonValue;
 import com.jskang.storagenode.common.SystemInfo;
 import com.jskang.storagenode.file.FileManage;
 import com.jskang.storagenode.node.Node;
@@ -75,6 +76,7 @@ public class StorageNodeApplication implements ApplicationListener<ApplicationSt
                     throw new IllegalStateException("FileManager load fail.");
                 }
                 NodeStatusDao addNodeStatusDao = new NodeStatusDao(
+                    CommonValue.UPLOAD_PATH,
                     systemInfo.getHostName(),
                     systemInfo.getDiskTotalSize() - systemInfo.getDiskUseSize()
                 );

@@ -8,32 +8,25 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.Getter;
 
+@Getter
 public class NodeStatusDao implements Serializable {
 
     private String hostName;
     private double freeSize;
+    private String homePath;
     private Map<String, List<Path>> fileManage;
 
     @JsonCreator
     public NodeStatusDao(
+        @JsonProperty("homePath") String homePath,
         @JsonProperty("hostAddress") String hostName,
         @JsonProperty("freeSize") double freeSize) {
+        this.homePath = homePath;
         this.hostName = hostName;
         this.freeSize = freeSize;
         this.fileManage = new HashMap<>();
-    }
-
-    public String getHostName() {
-        return hostName;
-    }
-
-    public double getFreeSize() {
-        return freeSize;
-    }
-
-    public Map<String, List<Path>> getFileManage() {
-        return fileManage;
     }
 
     public void updateFileManage() {

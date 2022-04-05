@@ -1,5 +1,6 @@
 package com.jskang.storagenode.file;
 
+import com.jskang.storagenode.common.CommonValue;
 import com.jskang.storagenode.common.SystemInfo;
 import com.jskang.storagenode.node.NodeStatusDao;
 import com.jskang.storagenode.node.NodeStatusDaos;
@@ -53,6 +54,7 @@ public class Upload {
                 .doOnSuccess(o -> {
                     String hostName = this.systemInfo.getHostName();
                     NodeStatusDao nodeStatusDao = new NodeStatusDao(
+                        CommonValue.UPLOAD_PATH,
                         hostName,
                         this.systemInfo.getDiskTotalSize() - this.systemInfo.getDiskUseSize()
                     );

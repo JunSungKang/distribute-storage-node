@@ -1,9 +1,7 @@
 package com.jskang.storagenode.node;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.jskang.storagenode.common.Converter;
-import com.jskang.storagenode.common.RequestApi;
-import com.jskang.storagenode.common.SystemInfo;
+import com.jskang.storagenode.common.*;
 import com.jskang.storagenode.response.ResponseResult;
 import com.jskang.storagenode.response.ResponseResult.ResponseData;
 import java.io.File;
@@ -104,6 +102,7 @@ public class Node {
     public Mono<ServerResponse> getNodeStatus() {
         LOG.info("Select node information.");
         NodeStatusDao nodeStatusDao = new NodeStatusDao(
+            CommonValue.UPLOAD_PATH,
             this.systemInfo.getHostName(),
             this.systemInfo.getDiskTotalSize() - this.systemInfo.getDiskUseSize()
         );
@@ -129,6 +128,7 @@ public class Node {
             .concat("&port=" + this.systemInfo.getPort());
 
         NodeStatusDao nodeStatusDao = new NodeStatusDao(
+            CommonValue.UPLOAD_PATH,
             this.systemInfo.getHostName(),
             this.systemInfo.getDiskTotalSize() - this.systemInfo.getDiskUseSize()
         );
