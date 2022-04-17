@@ -28,12 +28,12 @@ class StorageContractTest {
 
     private SmartContract smartContract;
     private String adminAddress = "0x4161e78793712124b5653cE6a1d592B64B654b72";
-    private String adminPassword = "1234567890";
+    private String adminPassword = "alfl1go!";
     private String contractAddress = "0xbE587c126465137aB58388610EC453d4670924BD";
 
     @BeforeEach
     void setUp() {
-        this.smartContract = new SmartContract("127.0.0.1", "8545");
+        this.smartContract = new SmartContract("192.168.55.121", "8545");
         this.smartContract.connection();
     }
 

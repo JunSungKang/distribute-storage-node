@@ -86,4 +86,49 @@ public class Converter {
 
         return new String(bytes32.getValue());
     }
+
+    public static Bytes32[] stringToBytes64(String str) throws DataSizeRangeException {
+        byte[] bytes1 = new byte[32];
+        byte[] bytes2 = new byte[32];
+        byte[] byteStr = str.getBytes(StandardCharsets.UTF_8);
+
+        for (int i=0; i<64; i++) {
+            if (i < byteStr.length) {
+                if (i<32) {
+                    bytes1[i] = byteStr[i];
+                } else {
+                    bytes2[i] = byteStr[i];
+                }
+            } else {
+                if (i<32) {
+                    bytes1[i] = 0x00;
+                } else {
+                    bytes2[i] = 0x00;
+                }
+            }
+        }
+
+        Bytes32[] bytes32 = { new Bytes32(bytes1), new Bytes32(bytes1) };
+        return bytes32;
+    }
+
+    public static String bytes64ToString(byte[] bytes1, byte[] bytes2) throws DataSizeRangeException {
+        final int dataSize1 = bytes1.length;
+        final int dataSize2 = bytes2.length;
+        if (dataSize1 != 32 || dataSize2 != 32) {
+            throw new DataSizeRangeException();
+        }
+        byte[] bytes = new byte[64];
+        Bytes32 bytes32a = new Bytes32(bytes1);
+        Bytes32 bytes32b = new Bytes32(bytes2);
+        for (int i=0; i<64; i++) {
+            if (i<32) {
+                bytes[i] = bytes32a.getValue()[i];
+            }  else {
+                bytes[i] = bytes32b.getValue()[i];
+            }
+        }
+
+        return new String(bytes);
+    }
 }

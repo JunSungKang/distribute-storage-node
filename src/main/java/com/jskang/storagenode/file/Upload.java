@@ -41,8 +41,8 @@ public class Upload {
                     Map<String, Part> map = parts.toSingleValueMap();
                     if (map.get("file") instanceof FilePart) {
                         FilePart filePart = (FilePart) map.get("file");
-                        Path path = Paths.get("upload\\" + filePart.filename());
-                        FileManage.addPosition(fileName, path);
+                        FileManage.addPosition(fileName, filePart.filename());
+                        Path path = Paths.get(CommonValue.UPLOAD_PATH, filePart.filename());
                         return filePart
                             .transferTo(path)
                             .doOnError(
