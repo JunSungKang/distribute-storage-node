@@ -1,12 +1,17 @@
 package com.jskang.storagenode;
 
 import com.jskang.storagenode.common.CommonValue;
+import com.jskang.storagenode.common.Converter;
 import com.jskang.storagenode.common.SystemInfo;
 import com.jskang.storagenode.file.FileManage;
 import com.jskang.storagenode.node.Node;
 import com.jskang.storagenode.node.NodeStatusDao;
 import com.jskang.storagenode.node.NodeStatusDaos;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,17 +76,34 @@ public class StorageNodeApplication implements ApplicationListener<ApplicationSt
                     .nodeSearch(hostName)
                     .isPresent()
             ) {
-                if (!FileManage.loadFileManager()) {
-                    LOG.error("FileManager load fail.");
-                    throw new IllegalStateException("FileManager load fail.");
+                int rst = FileManage.loadFileManager();
+                if (rst == -1) {
+                    LOG.warn("FileManager size 0, but no critical error.");
                 }
                 NodeStatusDao addNodeStatusDao = new NodeStatusDao(
                     CommonValue.UPLOAD_PATH,
                     systemInfo.getHostName(),
                     systemInfo.getDiskTotalSize() - systemInfo.getDiskUseSize()
                 );
+
+                // 기존에 노드를 실행한 기록이 있는 경우, 파일매니저 맵 읽어오기
                 addNodeStatusDao.updateFileManage();
                 NodeStatusDaos.addNodeStatusDao(addNodeStatusDao);
+
+                try {
+                    File file = Paths.get("data", "FileManage.fm").toFile();
+                    FileOutputStream out = new FileOutputStream(file);
+
+                    String json = Converter.objToJson(NodeStatusDaos.getNodeStatusAlls());
+                    out.write(json.getBytes(StandardCharsets.UTF_8));
+                    out.close();
+                } catch (FileNotFoundException e) {
+                    LOG.error(e.getMessage());
+                    throw new IllegalStateException(e.getMessage());
+                } catch (IOException e) {
+                    LOG.error(e.getMessage());
+                    throw new IllegalStateException(e.getMessage());
+                }
             }
         }
 

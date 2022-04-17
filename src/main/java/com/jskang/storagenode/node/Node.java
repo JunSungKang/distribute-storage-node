@@ -123,7 +123,7 @@ public class Node {
     public Mono<ServerResponse> networkJoinRequest() throws Exception {
         String localIp = this.systemInfo.getLocalIpAddress();
 
-        String url = "192.168.55.23:"
+        String url = "localhost:"
             .concat("20040/node/join?ip=" + localIp)
             .concat("&port=" + this.systemInfo.getPort());
 

@@ -3,8 +3,11 @@ package com.jskang.storagenode.file;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.jskang.storagenode.common.Converter;
 import com.jskang.storagenode.common.SystemInfo;
+import com.jskang.storagenode.node.NodeStatusDaos;
 import com.jskang.storagenode.response.ResponseResult;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -26,12 +29,12 @@ import reactor.core.publisher.Mono;
 public class FileManage {
 
     private static Logger LOG = LoggerFactory.getLogger(FileManage.class);
-    private static Map<String, List<Path>> fileManage = new HashMap<>();
+    private static Map<String, List<String>> fileManage = new HashMap<>();
 
     /**
      * 파일이 각 서버에 분산된 위치가 저장된 Map 변수 전체 조회
      */
-    public static Map<String, List<Path>> getAllFileManage() {
+    public static Map<String, List<String>> getAllFileManage() {
         return fileManage;
     }
 
@@ -40,7 +43,7 @@ public class FileManage {
      */
     public static Mono<ServerResponse> getFileList() {
         Set<String> fileList = new HashSet<>();
-        for (Entry<String, List<Path>> fileName : fileManage.entrySet()) {
+        for (Entry<String, List<String>> fileName : fileManage.entrySet()) {
             fileList.add(fileName.getKey());
         }
         return ResponseResult.success(fileList);
@@ -76,36 +79,36 @@ public class FileManage {
      * 파일 배포 서버 위치 추가
      *
      * @param fileKey  파일 해시 값
-     * @param position 분산 서버 경로
+     * @param fileName 분산 파일명
      */
-    public static void addFile(String fileKey, List<Path> position) {
-        fileManage.put(fileKey, position);
+    public static void addFile(String fileKey, List<String> fileName) {
+        fileManage.put(fileKey, fileName);
     }
 
     /**
      * 파일 배포 서버 위치 추가
      *
      * @param fileKey  파일 해시 값
-     * @param position 분산 서버 경로
+     * @param fileName 분산 파일명
      */
-    public static void addFile(String fileKey, Path... position) {
-        fileManage.put(fileKey, Arrays.asList(position));
+    public static void addFile(String fileKey, String... fileName) {
+        fileManage.put(fileKey, Arrays.asList(fileName));
     }
 
     /**
      * 파일 배포 서버에 분산된 툭정 서버 추가
      *
      * @param fileKey  파일 해시 값
-     * @param position 분산 서버 경로
+     * @param fileName 분산 파일명
      */
-    public static void addPosition(String fileKey, Path position) {
-        List<Path> positions = fileManage.get(fileKey);
-        if (positions == null) {
-            positions = new ArrayList<>();
+    public static void addPosition(String fileKey, String fileName) {
+        List<String> fileNames = fileManage.get(fileKey);
+        if (fileNames == null) {
+            fileNames = new ArrayList<>();
         }
-        positions.add(position);
+        fileNames.add(fileName);
 
-        fileManage.put(fileKey, positions);
+        fileManage.put(fileKey, fileNames);
     }
 
     /**
@@ -118,16 +121,32 @@ public class FileManage {
         return fileManage.get(fileKey) == null ? false : true;
     }
 
-    public static boolean loadFileManager() {
+    public static int loadFileManager() {
         LOG.info("FileManager.fm read.");
 
+        Map<String, Object> data = new HashMap<>();
         File file = Paths.get("data", "FileManage.fm").toFile();
-        Map<String, Object> data = (Map) Converter.fileToObj(file, new TypeReference<Map>() {
-        });
-        List<Map<String, Object>> nodeList = (List<Map<String, Object>>) Converter.objToObj(
-            data.get("nodeStatusDaos"), new TypeReference<List<Map<String, Object>>>() {
+        try {
+            if (!file.isFile()) {
+                // 최초 실행의 경우 파일이 없으므로 파일 생성
+                file.createNewFile();
+                data = NodeStatusDaos.getNodeStatusAlls();
             }
-        );
+        } catch (IOException e) {
+            LOG.error("file create error.");
+            LOG.debug(e.getMessage());
+        } catch (Exception e) {
+            LOG.error("file create error.");
+            LOG.debug(e.getMessage());
+        }
+
+        List<Map<String, Object>> nodeList = new ArrayList<>();
+        if (file.length() > 3) {
+            data = (Map) Converter.fileToObj(file, new TypeReference<Map>() {});
+            nodeList = (List<Map<String, Object>>) Converter.objToObj(
+                data.get("nodeStatusDaos"), new TypeReference<List<Map<String, Object>>>() {}
+            );
+        }
 
         // 자기 자신의 호스트네임 얻어오기
         SystemInfo systemInfo = new SystemInfo();
@@ -138,10 +157,11 @@ public class FileManage {
             .findFirst();
 
         if (optional.isPresent()) {
-            fileManage.putAll((Map<String, List<Path>>) optional.get().get("fileManage"));
-            return true;
+            fileManage.putAll((Map<String, List<String>>) optional.get().get("fileManage"));
+            return 0;
         } else {
-            return false;
+            fileManage.putAll(new HashMap<>());
+            return -1;
         }
     }
 }

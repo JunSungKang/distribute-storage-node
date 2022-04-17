@@ -16,7 +16,7 @@ public class NodeStatusDao implements Serializable {
     private String hostName;
     private double freeSize;
     private String homePath;
-    private Map<String, List<Path>> fileManage;
+    private Map<String, List<String>> fileManage;
 
     @JsonCreator
     public NodeStatusDao(
@@ -26,6 +26,10 @@ public class NodeStatusDao implements Serializable {
         this.homePath = homePath;
         this.hostName = hostName;
         this.freeSize = freeSize;
+        this.fileManage = new HashMap<>();
+    }
+
+    public void newFileManage() {
         this.fileManage = new HashMap<>();
     }
 
