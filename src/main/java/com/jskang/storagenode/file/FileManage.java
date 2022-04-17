@@ -164,4 +164,15 @@ public class FileManage {
             return -1;
         }
     }
+
+    /**
+     * 기존의 파일 매니저의 가장 최신 상태를 읽어옴
+     * @return
+     */
+    public static NodeStatusDaos readFileManager() {
+        LOG.info("FileManager.fm read.");
+
+        File file = Paths.get("data", "FileManage.fm").toFile();
+        return (NodeStatusDaos)Converter.fileToObj(file, new TypeReference<NodeStatusDaos>() {});
+    }
 }

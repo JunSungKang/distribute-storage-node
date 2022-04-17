@@ -1,10 +1,16 @@
 package com.jskang.storagenode.file;
 
 import com.jskang.storagenode.common.CommonValue;
+import com.jskang.storagenode.common.Converter;
 import com.jskang.storagenode.common.SystemInfo;
 import com.jskang.storagenode.node.NodeStatusDao;
 import com.jskang.storagenode.node.NodeStatusDaos;
 import com.jskang.storagenode.response.ResponseResult;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -60,8 +66,22 @@ public class Upload {
                     );
                     nodeStatusDao.updateFileManage();
 
-                    NodeStatusDaos.editNodeStatusDaos(hostName, nodeStatusDao);
-                    NodeStatusDaos.updateVersion();
+                    NodeStatusDaos nodeStatusDaos = FileManage.readFileManager();
+                    nodeStatusDaos.editNodeStatusDaos(hostName, nodeStatusDao);
+                    nodeStatusDaos.updateVersion();
+
+                    try {
+                        File file = Paths.get("data", "FileManage.fm").toFile();
+                        FileOutputStream out = new FileOutputStream(file);
+
+                        String json = Converter.objToJson(NodeStatusDaos.getNodeStatusAlls());
+                        out.write(json.getBytes(StandardCharsets.UTF_8));
+                        out.close();
+                    } catch (FileNotFoundException e) {
+                        LOG.error(e.getMessage());
+                    } catch (IOException e) {
+                        LOG.error(e.getMessage());
+                    }
                     LOG.info("file upload success.");
                 })
                 .doOnError(throwable -> {
