@@ -27,8 +27,8 @@ import org.web3j.utils.Numeric;
 class StorageContractTest {
 
     private SmartContract smartContract;
-    private String adminAddress = "0x4161e78793712124b5653cE6a1d592B64B654b72";
-    private String adminPassword = "alfl1go!";
+    private String adminAddress = "0xc1dC7f8561921729A42eB8481864BA939dED5198";
+    private String adminPassword = "1234";
     private String contractAddress = "0xbE587c126465137aB58388610EC453d4670924BD";
 
     @BeforeEach
