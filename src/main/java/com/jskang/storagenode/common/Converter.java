@@ -37,7 +37,7 @@ public class Converter {
 
     public static Object fileToObj(File json, TypeReference typeReference) {
         try {
-            return mapper.readValue(json, new TypeReference<Map>() {});
+            return mapper.readValue(json, typeReference);
         } catch (IOException e) {
             throw new IllegalStateException(e.getMessage());
         }
