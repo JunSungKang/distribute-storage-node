@@ -1,12 +1,13 @@
 package com.jskang.storagenode;
 
+import com.jskang.storagenode.common.Converter;
 import com.jskang.storagenode.file.Download;
+import com.jskang.storagenode.file.FileDamageChecker;
 import com.jskang.storagenode.file.FileManage;
 import com.jskang.storagenode.file.Upload;
 import com.jskang.storagenode.node.Node;
 import com.jskang.storagenode.response.ResponseResult;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -43,18 +44,19 @@ public class api {
             .GET("file/list",
                 RequestPredicates.accept(MediaType.APPLICATION_JSON),
                 request -> FileManage.getFileList())
+            .GET("file/damage-check",
+                RequestPredicates.accept(MediaType.APPLICATION_JSON),
+                request -> new FileDamageChecker().damageCheck(request, "fileName"))
             .build();
     }
 
     private Mono<ServerResponse> filePosition(ServerRequest request) {
-        Optional<String> optionalFileName = request.queryParam("fileName");
-        if (optionalFileName.isPresent()) {
-            String fileName = optionalFileName.get();
-            List<String> positions = FileManage.getFilePosition(fileName);
-
-            return ResponseResult.success(positions);
-        } else {
+        String fileName = Converter.getQueryParam(request, "fileName");
+        if (fileName.isBlank()) {
             return ResponseResult.fail(HttpStatus.BAD_REQUEST);
         }
+
+        List<String> positions = FileManage.getFilePosition(fileName);
+        return ResponseResult.success(positions);
     }
 }

@@ -8,6 +8,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
@@ -120,7 +121,7 @@ public class SmartContract {
         List<Type> decode = FunctionReturnDecoder.decode(ethCall.getResult(),
             function.getOutputParameters());
 
-        List<String> values = new ArrayList<>();
+        List<String> values = new LinkedList<>();
         try {
             for (Type type : decode) {
                 String value = Converter.bytes32ToString((byte[]) type.getValue());
