@@ -55,122 +55,122 @@ public class Upload {
      * @return 업로드 성공시 200 (SUCCESS) 반환, 실패시 500(INTERNAL_SERVER_ERROR) 반환.
      */
     public Mono<ServerResponse> fileUpload(ServerRequest request) {
-        Optional<String> optionalFileName = request.queryParam("fileName");
-
-        if (optionalFileName.isPresent()) {
-            final String fileName = optionalFileName.get();
-
-            return request.body(BodyExtractors.toMultipartData())
-                .flatMap(parts -> {
-                    Map<String, Part> map = parts.toSingleValueMap();
-                    if (map.get("file") instanceof FilePart) {
-                        FilePart filePart = (FilePart) map.get("file");
-                        FileManage.addPosition(fileName, filePart.filename());
-                        Path path = Paths.get(CommonValue.UPLOAD_PATH, filePart.filename());
-
-                        try {
-                            // 파일명
-                            List<Bytes32> fileNames = fileNamesMap.get(fileName+ "-filename");
-                            if (fileNames == null) {
-                                fileNames = new ArrayList<>();
-                            }
-                            fileNames.add(
-                                Converter.stringToBytes32(filePart.filename())
-                            );
-                            fileNamesMap.put(fileName+ "-filename", fileNames);
-
-                            // 파일 해시
-                            List<Bytes32> fileHashs = fileHashsMap.get(fileName+ "-filehash");
-                            if (fileHashs == null) {
-                                fileHashs = new ArrayList<>();
-                            }
-                            MessageDigest hash = MessageDigest.getInstance(CommonValue.HASH_ALGORITHM_SHA256);
-                            hash.update(filePart.filename().getBytes(StandardCharsets.UTF_8));
-                            fileHashs.add(
-                                new Bytes32(hash.digest())
-                            );
-                            fileHashsMap.put(fileName+ "-filehash", fileHashs);
-                        } catch (NoSuchAlgorithmException e) {
-                            LOG.error(CommonValue.HASH_ALGORITHM_SHA256+ " hash change fail.");
-                            LOG.debug(e.getMessage());
-                        } catch (DataSizeRangeException e) {
-                            LOG.error("need filename length size == 32");
-                            LOG.debug(e.getMessage());
-                        }
-                        return filePart
-                            .transferTo(path)
-                            .doOnError(throwable -> ResponseResult.fail(HttpStatus.INTERNAL_SERVER_ERROR))
-                            .doOnSuccess(unused -> ResponseResult.success(""));
-                    }
-                    return ResponseResult.fail(HttpStatus.INTERNAL_SERVER_ERROR);
-                })
-                .doOnSuccess(o -> {
-                    String hostName = this.systemInfo.getHostName();
-                    NodeStatusDao nodeStatusDao = new NodeStatusDao(
-                        CommonValue.UPLOAD_PATH,
-                        hostName,
-                        this.systemInfo.getDiskTotalSize() - this.systemInfo.getDiskUseSize()
-                    );
-                    nodeStatusDao.updateFileManage();
-
-                    NodeStatusDaos nodeStatusDaos = FileManage.readFileManager();
-                    nodeStatusDaos.editNodeStatusDaos(hostName, nodeStatusDao);
-                    nodeStatusDaos.updateVersion();
-
-                    // FileManage refresh.
-                    try {
-                        File file = Paths.get("data", "FileManage.fm").toFile();
-                        FileOutputStream out = new FileOutputStream(file);
-
-                        String json = Converter.objToJson(NodeStatusDaos.getNodeStatusAlls());
-                        out.write(json.getBytes(StandardCharsets.UTF_8));
-                        out.close();
-                    } catch (FileNotFoundException e) {
-                        LOG.error(e.getMessage());
-                    } catch (IOException e) {
-                        LOG.error(e.getMessage());
-                    }
-                    LOG.info("file upload success.");
-                })
-                .doOnError(throwable -> {
-                    LOG.error(throwable.getMessage());
-                })
-                .doFinally(result -> {
-                    List<Bytes32> fileNames = fileNamesMap.get(fileName+ "-filename");
-                    List<Bytes32> fileHashs = fileHashsMap.get(fileName+ "-filehash");
-                    if (result.toString().equals("onComplete") && fileNames.size() == 9 && fileHashs.size() == 9) {
-                        // File smartcontract generate.
-                        SmartContract smartContract = new SmartContract();
-                        boolean isCheck = smartContract.connection();
-                        if (!isCheck) {
-                            LOG.error("Smart-Contract connection fail.");
-                        } else {
-                            byte[] hashValue = null;
-                            try {
-                                MessageDigest hash = MessageDigest.getInstance(CommonValue.HASH_ALGORITHM_SHA256);
-                                hash.update(fileName.getBytes(StandardCharsets.UTF_8));
-                                hashValue = hash.digest();
-                            } catch (NoSuchAlgorithmException e) {
-                                LOG.error(CommonValue.HASH_ALGORITHM_SHA256+ " hash change fail.");
-                                LOG.debug(e.getMessage());
-                            }
-
-                            smartContract.setFileHashValue(
-                                CommonValue.ADMIN_ADDRESS, CommonValue.ADMIN_PASSWORD,
-                                new Bytes32(hashValue),
-                                fileNames.parallelStream().collect(Collectors.toList()),
-                                fileHashs.parallelStream().collect(Collectors.toList())
-                            );
-                            // 완료된 작업 초기화
-                            fileNamesMap.remove(fileName+ "-filename");
-                            fileHashsMap.remove(fileName+ "-filehash");
-                        }
-                    }
-                })
-                .then(ResponseResult.success(""));
-        } else {
+        String fileName = Converter.getQueryParam(request, "fileName");
+        if (fileName.isBlank()) {
             LOG.error("request query 'fileName' empty.");
             return ResponseResult.fail(HttpStatus.BAD_REQUEST);
         }
+
+        return request.body(BodyExtractors.toMultipartData())
+            .flatMap(parts -> {
+                Map<String, Part> map = parts.toSingleValueMap();
+                if (map.get("file") instanceof FilePart) {
+                    FilePart filePart = (FilePart) map.get("file");
+                    FileManage.addPosition(fileName, filePart.filename());
+                    Path path = Paths.get(CommonValue.UPLOAD_PATH, filePart.filename());
+
+                    try {
+                        // 파일명
+                        List<Bytes32> fileNames = fileNamesMap.get(fileName+ "-filename");
+                        if (fileNames == null) {
+                            fileNames = new ArrayList<>();
+                        }
+                        fileNames.add(
+                            Converter.stringToBytes32(filePart.filename())
+                        );
+                        fileNamesMap.put(fileName+ "-filename", fileNames);
+
+                        // 파일 해시
+                        List<Bytes32> fileHashs = fileHashsMap.get(fileName+ "-filehash");
+                        if (fileHashs == null) {
+                            fileHashs = new ArrayList<>();
+                        }
+                        MessageDigest hash = MessageDigest.getInstance(CommonValue.HASH_ALGORITHM_SHA256);
+                        hash.update(filePart.filename().getBytes(StandardCharsets.UTF_8));
+                        fileHashs.add(
+                            new Bytes32(hash.digest())
+                        );
+                        fileHashsMap.put(fileName+ "-filehash", fileHashs);
+                    } catch (NoSuchAlgorithmException e) {
+                        LOG.error(CommonValue.HASH_ALGORITHM_SHA256+ " hash change fail.");
+                        LOG.debug(e.getMessage());
+                    } catch (DataSizeRangeException e) {
+                        LOG.error("need filename length size == 32");
+                        LOG.debug(e.getMessage());
+                    }
+                    return filePart
+                        .transferTo(path)
+                        .doOnError(throwable -> ResponseResult.fail(HttpStatus.INTERNAL_SERVER_ERROR))
+                        .doOnSuccess(unused -> ResponseResult.success(""));
+                }
+                return ResponseResult.fail(HttpStatus.INTERNAL_SERVER_ERROR);
+            })
+            .doOnSuccess(o -> {
+                // File Upload after, FileManage refresh ready.
+                String hostName = this.systemInfo.getHostName();
+                NodeStatusDao nodeStatusDao = new NodeStatusDao(
+                    CommonValue.UPLOAD_PATH,
+                    hostName,
+                    this.systemInfo.getDiskTotalSize() - this.systemInfo.getDiskUseSize()
+                );
+                nodeStatusDao.updateFileManage();
+
+                NodeStatusDaos nodeStatusDaos = FileManage.readFileManager();
+                nodeStatusDaos.editNodeStatusDaos(hostName, nodeStatusDao);
+                nodeStatusDaos.updateVersion();
+
+                // FileManage refresh.
+                try {
+                    File file = Paths.get("data", "FileManage.fm").toFile();
+                    FileOutputStream out = new FileOutputStream(file);
+
+                    String json = Converter.objToJson(NodeStatusDaos.getNodeStatusAlls());
+                    out.write(json.getBytes(StandardCharsets.UTF_8));
+                    out.close();
+                } catch (FileNotFoundException e) {
+                    LOG.error(e.getMessage());
+                } catch (IOException e) {
+                    LOG.error(e.getMessage());
+                }
+                LOG.info("file upload success.");
+            })
+            .doOnError(throwable -> {
+                LOG.error(throwable.getMessage());
+            })
+            .doFinally(result -> {
+                // All file upload after, smart-contract run.
+                List<Bytes32> fileNames = fileNamesMap.get(fileName+ "-filename");
+                List<Bytes32> fileHashs = fileHashsMap.get(fileName+ "-filehash");
+
+                if (result.toString().equals("onComplete") && fileNames.size() == 9 && fileHashs.size() == 9) {
+                    // File smartcontract generate.
+                    SmartContract smartContract = new SmartContract();
+                    boolean isCheck = smartContract.connection();
+                    if (!isCheck) {
+                        LOG.error("Smart-Contract connection fail.");
+                    } else {
+                        byte[] hashValue = null;
+                        try {
+                            MessageDigest hash = MessageDigest.getInstance(CommonValue.HASH_ALGORITHM_SHA256);
+                            hash.update(fileName.getBytes(StandardCharsets.UTF_8));
+                            hashValue = hash.digest();
+                        } catch (NoSuchAlgorithmException e) {
+                            LOG.error(CommonValue.HASH_ALGORITHM_SHA256+ " hash change fail.");
+                            LOG.debug(e.getMessage());
+                        }
+
+                        smartContract.setFileHashValue(
+                            CommonValue.ADMIN_ADDRESS, CommonValue.ADMIN_PASSWORD,
+                            new Bytes32(hashValue),
+                            fileNames.parallelStream().collect(Collectors.toList()),
+                            fileHashs.parallelStream().collect(Collectors.toList())
+                        );
+                        // 완료된 작업 초기화
+                        fileNamesMap.remove(fileName+ "-filename");
+                        fileHashsMap.remove(fileName+ "-filehash");
+                    }
+                }
+            })
+            .then(ResponseResult.success(""));
     }
 }

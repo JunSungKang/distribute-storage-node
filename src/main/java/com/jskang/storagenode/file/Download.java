@@ -1,11 +1,11 @@
 package com.jskang.storagenode.file;
 
+import com.jskang.storagenode.common.Converter;
 import com.jskang.storagenode.common.SystemInfo;
 import com.jskang.storagenode.node.NodeStatusDao;
 import com.jskang.storagenode.node.NodeStatusDaos;
 import com.jskang.storagenode.response.ResponseResult;
 import java.io.File;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
@@ -25,29 +25,27 @@ public class Download {
      * @return 다운로드에 성공하면 다운로드할 파일을 반환, 실패할 경우 400(BAD_REQUEST) 반환
      */
     public Mono<ServerResponse> fileDownload(ServerRequest request) {
-        Optional<String> optionalFileName = request.queryParam("fileName");
-
-        if (optionalFileName.isPresent()) {
-            String fileName = optionalFileName.get();
-            LOG.info("File '" + fileName + "' download start.");
-
-            // 기본 값은 현재 경로의 upload 디렉토리
-            String homePath = "upload";
-            String hostName = new SystemInfo().getHostName();
-            for (NodeStatusDao nodeStatusDao : NodeStatusDaos.getNodeStatusDaos()) {
-                if (nodeStatusDao.getHostName().equals(hostName)) {
-                    homePath = nodeStatusDao.getHomePath();
-                    break;
-                }
-            }
-            Resource resource = new FileSystemResource(homePath+ File.separator + fileName);
-            Mono<Resource> mapper = Mono.just(resource);
-
-            return ResponseResult.download(mapper, fileName);
-        } else {
+        String fileName = Converter.getQueryParam(request, "fileName");
+        if (fileName.isBlank()) {
             LOG.error("request query 'fileName' empty.");
             return ResponseResult.fail(HttpStatus.BAD_REQUEST);
         }
+
+        LOG.info("File '" + fileName + "' download start.");
+
+        // 기본 값은 현재 경로의 upload 디렉토리
+        String homePath = "upload";
+        String hostName = new SystemInfo().getHostName();
+        for (NodeStatusDao nodeStatusDao : NodeStatusDaos.getNodeStatusDaos()) {
+            if (nodeStatusDao.getHostName().equals(hostName)) {
+                homePath = nodeStatusDao.getHomePath();
+                break;
+            }
+        }
+        Resource resource = new FileSystemResource(homePath + File.separator + fileName);
+        Mono<Resource> mapper = Mono.just(resource);
+
+        return ResponseResult.download(mapper, fileName);
     }
 
 }
