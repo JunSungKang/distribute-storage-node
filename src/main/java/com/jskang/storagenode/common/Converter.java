@@ -3,7 +3,7 @@ package com.jskang.storagenode.common;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jskang.storagenode.common.exception.DataSizeRangeException;
+import com.jskang.storagenode.common.exception.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -57,6 +57,15 @@ public class Converter {
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e.getMessage());
         }
+    }
+
+    public static String settingString32Size(String str) {
+        int needStrLength = 32 - str.length();
+        for (int i=0; i<needStrLength; i++) {
+            str += "-";
+        }
+
+        return str;
     }
 
     public static Bytes32 stringToBytes32(String str) throws DataSizeRangeException {

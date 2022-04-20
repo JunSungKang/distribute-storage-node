@@ -3,11 +3,15 @@ package com.jskang.storagenode.file;
 import com.jskang.storagenode.common.CommonValue;
 import com.jskang.storagenode.common.Converter;
 import com.jskang.storagenode.common.SystemInfo;
+import com.jskang.storagenode.common.exception.DataSizeOutBoundException;
+import com.jskang.storagenode.common.exception.DataSizeRangeException;
 import com.jskang.storagenode.node.NodeStatusDao;
 import com.jskang.storagenode.node.NodeStatusDaos;
 import com.jskang.storagenode.response.ResponseResult;
 import com.jskang.storagenode.smartcontract.SmartContract;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -18,9 +22,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -36,6 +45,8 @@ public class Upload {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
     private SystemInfo systemInfo = new SystemInfo();
+    private static Map<String, List<Bytes32>> fileNamesMap = new HashMap<>();
+    private static Map<String, List<Bytes32>> fileHashsMap = new HashMap<>();
 
     /**
      * 파일 업로드 요청시, 파일 분산 후 업로드 기능
@@ -49,8 +60,6 @@ public class Upload {
         if (optionalFileName.isPresent()) {
             final String fileName = optionalFileName.get();
 
-            List<Bytes32> fileNames = new ArrayList<>();
-            List<Bytes32> fileHashs = new ArrayList<>();
             return request.body(BodyExtractors.toMultipartData())
                 .flatMap(parts -> {
                     Map<String, Part> map = parts.toSingleValueMap();
@@ -60,27 +69,37 @@ public class Upload {
                         Path path = Paths.get(CommonValue.UPLOAD_PATH, filePart.filename());
 
                         try {
-                            // 이더리움에 파일 변조체크를 위한 해시 변환
+                            // 파일명
+                            List<Bytes32> fileNames = fileNamesMap.get(fileName+ "-filename");
+                            if (fileNames == null) {
+                                fileNames = new ArrayList<>();
+                            }
                             fileNames.add(
-                                new Bytes32(filePart.filename().getBytes(StandardCharsets.UTF_8))
+                                Converter.stringToBytes32(filePart.filename())
                             );
+                            fileNamesMap.put(fileName+ "-filename", fileNames);
 
-                            MessageDigest hash = MessageDigest.getInstance("MD5", filePart.filename());
+                            // 파일 해시
+                            List<Bytes32> fileHashs = fileHashsMap.get(fileName+ "-filehash");
+                            if (fileHashs == null) {
+                                fileHashs = new ArrayList<>();
+                            }
+                            MessageDigest hash = MessageDigest.getInstance(CommonValue.HASH_ALGORITHM_SHA256);
                             hash.update(filePart.filename().getBytes(StandardCharsets.UTF_8));
                             fileHashs.add(
                                 new Bytes32(hash.digest())
                             );
-                        } catch (NoSuchProviderException e) {
-                            LOG.error("MD5 hash change fail.");
-                            LOG.debug(e.getMessage());
+                            fileHashsMap.put(fileName+ "-filehash", fileHashs);
                         } catch (NoSuchAlgorithmException e) {
-                            LOG.error("MD5 hash change fail.");
+                            LOG.error(CommonValue.HASH_ALGORITHM_SHA256+ " hash change fail.");
+                            LOG.debug(e.getMessage());
+                        } catch (DataSizeRangeException e) {
+                            LOG.error("need filename length size == 32");
                             LOG.debug(e.getMessage());
                         }
                         return filePart
                             .transferTo(path)
-                            .doOnError(
-                                throwable -> ResponseResult.fail(HttpStatus.INTERNAL_SERVER_ERROR))
+                            .doOnError(throwable -> ResponseResult.fail(HttpStatus.INTERNAL_SERVER_ERROR))
                             .doOnSuccess(unused -> ResponseResult.success(""));
                     }
                     return ResponseResult.fail(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -117,12 +136,36 @@ public class Upload {
                     LOG.error(throwable.getMessage());
                 })
                 .doFinally(result -> {
-                    // File smartcontract generate.
-                    SmartContract smartContract = new SmartContract();
-                    smartContract.connection();
-                    smartContract.setFileHashValue(
-                        "0xc1dC7f8561921729A42eB8481864BA939dED5198", "1234",
-                        new Bytes32(new byte[]{}), fileNames, fileHashs);
+                    List<Bytes32> fileNames = fileNamesMap.get(fileName+ "-filename");
+                    List<Bytes32> fileHashs = fileHashsMap.get(fileName+ "-filehash");
+                    if (result.toString().equals("onComplete") && fileNames.size() == 9 && fileHashs.size() == 9) {
+                        // File smartcontract generate.
+                        SmartContract smartContract = new SmartContract();
+                        boolean isCheck = smartContract.connection();
+                        if (!isCheck) {
+                            LOG.error("Smart-Contract connection fail.");
+                        } else {
+                            byte[] hashValue = null;
+                            try {
+                                MessageDigest hash = MessageDigest.getInstance(CommonValue.HASH_ALGORITHM_SHA256);
+                                hash.update(fileName.getBytes(StandardCharsets.UTF_8));
+                                hashValue = hash.digest();
+                            } catch (NoSuchAlgorithmException e) {
+                                LOG.error(CommonValue.HASH_ALGORITHM_SHA256+ " hash change fail.");
+                                LOG.debug(e.getMessage());
+                            }
+
+                            smartContract.setFileHashValue(
+                                CommonValue.ADMIN_ADDRESS, CommonValue.ADMIN_PASSWORD,
+                                new Bytes32(hashValue),
+                                fileNames.parallelStream().collect(Collectors.toList()),
+                                fileHashs.parallelStream().collect(Collectors.toList())
+                            );
+                            // 완료된 작업 초기화
+                            fileNamesMap.remove(fileName+ "-filename");
+                            fileHashsMap.remove(fileName+ "-filehash");
+                        }
+                    }
                 })
                 .then(ResponseResult.success(""));
         } else {

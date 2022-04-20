@@ -1,5 +1,6 @@
 package com.jskang.storagenode.smartcontract;
 
+import com.jskang.storagenode.common.CommonValue;
 import com.jskang.storagenode.common.Converter;
 import com.jskang.storagenode.common.exception.DataSizeRangeException;
 import java.io.IOException;
@@ -28,28 +29,25 @@ import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.http.HttpService;
-import org.web3j.utils.Numeric;
 
 public class SmartContract {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
-    private String hostIp = "192.168.56.1";
-    private String hostPort = "8545";
+
+    public static String DEFAULT_IP = "192.168.55.121";
+    public static String DEFAULT_PORT = "8545";
     private String host = "";
     private BigInteger GAS_LIMIT = BigInteger.valueOf(1000000L);
     private BigInteger GAS_PRICE = BigInteger.valueOf(10000000L);
-    private String CONTRACT_ADDRESS = "0xbE587c126465137aB58388610EC453d4670924BD";
 
     private Web3j web3j = null;
 
     public SmartContract() {
-        this.host = "http://" + this.hostIp + ":" + this.hostPort;
+        this.host = "http://" +DEFAULT_IP+ ":" +DEFAULT_PORT;
     }
 
     public SmartContract(String hostIp, String hostPort) {
-        this.hostIp = hostIp;
-        this.hostPort = hostPort;
-        this.host = "http://" + this.hostIp + ":" + this.hostPort;
+        this.host = "http://" + hostIp + ":" + hostPort;
     }
 
     public boolean connection() {
@@ -88,11 +86,10 @@ public class SmartContract {
     /**
      * 업로드된 파일의 해시값 얻어오기
      * @param key key 업로드한 파일 구분값
-     * @param address 이더리움 지갑 퍼블릭 주소
      * @return
      * @throws IOException
      */
-    public List<String> getFileHash(Bytes32 key, String address) throws IOException {
+    public List<String> getFileHash(Bytes32 key) throws IOException {
         // 1. ethereum을 호출할 함수 생성
         Function function = new Function("getFileHash",
             Arrays.asList(key),
@@ -111,8 +108,8 @@ public class SmartContract {
 
         // 2. transaction 제작
         Transaction transaction = Transaction.createEthCallTransaction(
-            address,
-            "0xbE587c126465137aB58388610EC453d4670924BD",
+            CommonValue.ADMIN_ADDRESS,
+            CommonValue.CONTRACT_ADDRESS,
             FunctionEncoder.encode(function));
 
         // 3. ethereum 호출후 결과 가져오기
@@ -125,13 +122,17 @@ public class SmartContract {
 
         List<String> values = new ArrayList<>();
         try {
-            for (int i = 2; i < decode.size(); i++) {
-                String value = Converter.bytes32ToString((byte[]) decode.get(i).getValue());
+            for (Type type : decode) {
+                String value = Converter.bytes32ToString((byte[]) type.getValue());
                 values.add(value);
             }
         } catch (DataSizeRangeException e) {
             LOG.error("Bytes32 to String mapping fail.");
             LOG.debug(e.getMessage());
+            return new ArrayList<>();
+        } catch (Exception e) {
+            LOG.debug(e.getMessage());
+            return new ArrayList<>();
         }
         return values;
     }
@@ -145,6 +146,10 @@ public class SmartContract {
      * @param fileHashs 업로드한 파일의 분산화된 각각의 파일 해시
      */
     public void setFileHashValue(String address, String password, Bytes32 key, List<Bytes32> fileNames, List<Bytes32> fileHashs) {
+        if (fileNames.size() != 9 || fileHashs.size() != 9) {
+            LOG.error("File be lost metadata. Smart-Contract fail.");
+            return;
+        }
         // 1. ethereum을 호출할 함수 생성
         Array sourceIp = new DynamicArray(Bytes32.class, fileNames);
         Array fileHash = new DynamicArray(Bytes32.class, fileHashs);
@@ -156,7 +161,7 @@ public class SmartContract {
         try {
             boolean unlockAccount = this.unlockAccount(address, password);
             if (!unlockAccount) {
-                System.out.println("UnlockAccount Fail.");
+                LOG.error("UnlockAccount Fail.");
                 return;
             }
         } catch (IOException e) {
@@ -182,12 +187,13 @@ public class SmartContract {
         //5. Transaction값 제작
         Transaction transaction = Transaction.createFunctionCallTransaction(
             address, nonce, Transaction.DEFAULT_GAS,
-            null, CONTRACT_ADDRESS,
+            null, CommonValue.CONTRACT_ADDRESS,
             FunctionEncoder.encode(function));
 
         // 6. ethereum Call
         try {
             EthSendTransaction ethSendTransaction = web3j.ethSendTransaction(transaction).send();
+            LOG.debug(ethSendTransaction.getResult());
         } catch (IOException e) {
             LOG.error("ETH Transaction fail.");
             LOG.debug(e.getMessage());

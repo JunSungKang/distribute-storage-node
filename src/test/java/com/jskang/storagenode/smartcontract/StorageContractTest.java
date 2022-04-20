@@ -1,7 +1,14 @@
 package com.jskang.storagenode.smartcontract;
 
+import com.jskang.storagenode.common.CommonValue;
+import com.jskang.storagenode.common.Converter;
+import com.jskang.storagenode.common.exception.DataSizeRangeException;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -27,8 +34,8 @@ import org.web3j.utils.Numeric;
 class StorageContractTest {
 
     private SmartContract smartContract;
-    private String adminAddress = "0xc1dC7f8561921729A42eB8481864BA939dED5198";
-    private String adminPassword = "1234";
+    private String adminAddress = "0x4161e78793712124b5653ce6a1d592b64b654b72";
+    private String adminPassword = "alfl1go!";
     private String contractAddress = "0xbE587c126465137aB58388610EC453d4670924BD";
 
     @BeforeEach
@@ -38,16 +45,23 @@ class StorageContractTest {
     }
 
     @Test
-    public void getFileHash() throws IOException {
+    public void getFileHash() throws IOException, DataSizeRangeException, NoSuchAlgorithmException {
         // 0. 데이터 생성
-        String rawInput = "0x0000000000000000000000000000000000000000000000000000000000000000";
-        byte[] rawInputbytes = Numeric.hexStringToByteArray(rawInput);
-        Bytes32 bytes32 = new Bytes32(rawInputbytes);
+        String rawInput = "sample_jskang.mp4";
+        MessageDigest hash = MessageDigest.getInstance(CommonValue.HASH_ALGORITHM_SHA256);
+        hash.update(rawInput.getBytes(StandardCharsets.UTF_8));
+        Bytes32 bytes32 = new Bytes32(hash.digest());
 
         // 1. ethereum을 호출할 함수 생성
         Function function = new Function("getFileHash",
             Arrays.asList(bytes32),
             Arrays.asList(
+                new TypeReference<Bytes32>() {},
+                new TypeReference<Bytes32>() {},
+                new TypeReference<Bytes32>() {},
+                new TypeReference<Bytes32>() {},
+                new TypeReference<Bytes32>() {},
+                new TypeReference<Bytes32>() {},
                 new TypeReference<Bytes32>() {},
                 new TypeReference<Bytes32>() {},
                 new TypeReference<Bytes32>() {},
@@ -66,8 +80,7 @@ class StorageContractTest {
         EthCall ethCall = web3j.ethCall(transaction, DefaultBlockParameterName.LATEST).send();
 
         // 4. 결과값 decode
-        List<Type> decode = FunctionReturnDecoder.decode(ethCall.getResult(),
-            function.getOutputParameters());
+        List<Type> decode = FunctionReturnDecoder.decode(ethCall.getResult(),function.getOutputParameters());
 
         Object decode1 = FunctionReturnDecoder.decodeIndexedValue(ethCall.getResult(), new TypeReference<Bytes32>() {});
 
@@ -77,31 +90,43 @@ class StorageContractTest {
         System.out.println("getValue = " + byteArrayToString( (byte[])decode.get(2).getValue() ));
         System.out.println("getValue = " + byteArrayToString( (byte[])decode.get(3).getValue() ));
         System.out.println("getValue = " + byteArrayToString( (byte[])decode.get(4).getValue() ));
+        System.out.println("getValue = " + byteArrayToString( (byte[])decode.get(5).getValue() ));
+        System.out.println("getValue = " + byteArrayToString( (byte[])decode.get(6).getValue() ));
+        System.out.println("getValue = " + byteArrayToString( (byte[])decode.get(7).getValue() ));
+        System.out.println("getValue = " + byteArrayToString( (byte[])decode.get(8).getValue() ));
+        System.out.println("getValue = " + byteArrayToString( (byte[])decode.get(9).getValue() ));
+        System.out.println("getValue = " + byteArrayToString( (byte[])decode.get(10).getValue() ));
     }
 
     @Test
-    public void setFileHashValue() throws IOException, InterruptedException, ExecutionException {
+    public void setFileHashValue()
+        throws IOException, InterruptedException, ExecutionException, DataSizeRangeException, NoSuchAlgorithmException {
         // 테스트용으로 0x00000000000000000000000000000000 를 키 값으로 진행
         // 0. 데이터 생성
-        String rawInput = "0x0000000000000000000000000000000000000000000000000000000000000000";
-        byte[] rawInputbytes = Numeric.hexStringToByteArray(rawInput);
-        Bytes32 bytes32 = new Bytes32(rawInputbytes);
+        String rawInput = "sample.mp4";
+        MessageDigest hash = MessageDigest.getInstance(CommonValue.HASH_ALGORITHM_SHA256);
+        hash.update(rawInput.getBytes(StandardCharsets.UTF_8));
+        Bytes32 bytes32 = new Bytes32(hash.digest());
 
-        String rawInput_1 = "0x4000000000000000000000000000000000000000000000000000000000000000";
-        byte[] rawInputbytes_1 = Numeric.hexStringToByteArray(rawInput_1);
-        Bytes32 bytes32_1 = new Bytes32(rawInputbytes_1);
+        List<Bytes32> bytes32sIP = new ArrayList<>();
+        for (int i=0; i<9; i++) {
+            String rawInput2 = "sample.mp4." +i;
+            hash = MessageDigest.getInstance(CommonValue.HASH_ALGORITHM_SHA256);
+            hash.update(rawInput2.getBytes(StandardCharsets.UTF_8));
+            bytes32sIP.add(new Bytes32(hash.digest()));
+        }
 
-        String rawInput_2 = "0x5000000000000000000000000000000000000000000000000000000000000000";
-        byte[] rawInputbytes_2 = Numeric.hexStringToByteArray(rawInput_2);
-        Bytes32 bytes32_2 = new Bytes32(rawInputbytes_2);
-
-        String rawInput_3 = "0x6000000000000000000000000000000000000000000000000000000000000000";
-        byte[] rawInputbytes_3 = Numeric.hexStringToByteArray(rawInput_3);
-        Bytes32 bytes32_3 = new Bytes32(rawInputbytes_3);
+        List<Bytes32> bytes32sHASH = new ArrayList<>();
+        for (int i=0; i<9; i++) {
+            String rawInput2 = "sample2.mp4." +i;
+            hash = MessageDigest.getInstance(CommonValue.HASH_ALGORITHM_SHA256);
+            hash.update(rawInput2.getBytes(StandardCharsets.UTF_8));
+            bytes32sHASH.add(new Bytes32(hash.digest()));
+        }
 
         // 1. ethereum을 호출할 함수 생성
-        Array sourceIp = new DynamicArray(Bytes32.class, bytes32_1, bytes32_2, bytes32_3);
-        Array fileHash = new DynamicArray(Bytes32.class, bytes32_1, bytes32_2, bytes32_3);
+        Array sourceIp = new DynamicArray(Bytes32.class, bytes32sIP);
+        Array fileHash = new DynamicArray(Bytes32.class, bytes32sHASH);
         Function function = new Function("setFileHashValue",
             Arrays.asList( bytes32, sourceIp, fileHash),
             Collections.emptyList());

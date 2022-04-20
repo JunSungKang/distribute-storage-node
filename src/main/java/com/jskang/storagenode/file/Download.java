@@ -1,6 +1,10 @@
 package com.jskang.storagenode.file;
 
+import com.jskang.storagenode.common.SystemInfo;
+import com.jskang.storagenode.node.NodeStatusDao;
+import com.jskang.storagenode.node.NodeStatusDaos;
 import com.jskang.storagenode.response.ResponseResult;
+import java.io.File;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +17,7 @@ import reactor.core.publisher.Mono;
 
 public class Download {
 
-    private Logger LOG = LoggerFactory.getLogger(this.getClass());
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 
     /**
      * 파일 다운로드 요청시 파일 다운로드 기능
@@ -27,7 +31,16 @@ public class Download {
             String fileName = optionalFileName.get();
             LOG.info("File '" + fileName + "' download start.");
 
-            Resource resource = new FileSystemResource("upload\\" + fileName);
+            // 기본 값은 현재 경로의 upload 디렉토리
+            String homePath = "upload";
+            String hostName = new SystemInfo().getHostName();
+            for (NodeStatusDao nodeStatusDao : NodeStatusDaos.getNodeStatusDaos()) {
+                if (nodeStatusDao.getHostName().equals(hostName)) {
+                    homePath = nodeStatusDao.getHomePath();
+                    break;
+                }
+            }
+            Resource resource = new FileSystemResource(homePath+ File.separator + fileName);
             Mono<Resource> mapper = Mono.just(resource);
 
             return ResponseResult.download(mapper, fileName);
