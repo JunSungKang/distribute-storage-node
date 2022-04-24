@@ -45,10 +45,14 @@ public class FileDamageChecker {
             // 서버에서 가지고 있는 실제 파일 해시
             List<String> realFiles = new LinkedList<>();
             for (String file : FileManage.getFilePosition(fileName)) {
-                try (InputStream is = Files.newInputStream(Paths.get(file))) {
-                    byte[] fileHash = Converter.converterSHA256(is);
-                    realFiles.add(Converter.bytes32ToString(fileHash));
+                if (!Paths.get(file).toFile().isFile()) {
+                    // 파일이 없는 경우, 임의의 공백 데이터 삽입
+                    realFiles.add("");
+                    continue;
                 }
+                InputStream is = Files.newInputStream(Paths.get(file));
+                byte[] fileHash = Converter.converterSHA256(is);
+                realFiles.add(Converter.bytes32ToString(fileHash));
             }
 
             // 스마트컨트랙트에 등록된 파일 해시
