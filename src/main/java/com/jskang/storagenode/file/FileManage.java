@@ -57,9 +57,13 @@ public class FileManage {
      */
     public static List<String> getFilePosition(String fileKey) {
         List<String> positions = new ArrayList<>();
+        if (fileManage.get(fileKey) == null) {
+            return new ArrayList<>();
+        }
+
         int size = fileManage.get(fileKey).size();
         for (int i=0; i<size; i++) {
-            positions.add("upload".concat( String.valueOf(fileManage.get(fileKey).get(i)) ) );
+            positions.add("upload"+File.separator.concat( String.valueOf(fileManage.get(fileKey).get(i)) ) );
         }
 
         return positions;
@@ -105,6 +109,10 @@ public class FileManage {
         List<String> fileNames = fileManage.get(fileKey);
         if (fileNames == null) {
             fileNames = new ArrayList<>();
+        }
+        if (fileNames.contains(fileName)) {
+            // 동일한 파일명이 이미 업로드된 경우 추가되지 않도록 처리.
+            return;
         }
         fileNames.add(fileName);
 
