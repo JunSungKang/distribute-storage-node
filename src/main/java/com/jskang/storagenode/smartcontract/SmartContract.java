@@ -104,6 +104,7 @@ public class SmartContract {
                 new TypeReference<Bytes32>() {},
                 new TypeReference<Bytes32>() {},
                 new TypeReference<Bytes32>() {},
+                new TypeReference<Bytes32>() {},
                 new TypeReference<Bytes32>() {}
             ));
 
