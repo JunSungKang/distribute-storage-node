@@ -3,16 +3,17 @@ package com.jskang.storagenode.common;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jskang.storagenode.common.exception.*;
-import com.jskang.storagenode.file.FileManage;
-import com.jskang.storagenode.response.ResponseResult;
+import com.jskang.storagenode.common.exception.DataSizeRangeException;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.web3j.abi.datatypes.generated.Bytes32;
 
@@ -61,6 +62,33 @@ public class Converter {
             return mapper.readValue(json, new TypeReference<List>() {});
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e.getMessage());
+        }
+    }
+
+    public static byte[] converterSHA256(String data) throws NoSuchAlgorithmException {
+        MessageDigest hash = MessageDigest.getInstance(CommonValue.HASH_ALGORITHM_SHA256);
+        hash.update(data.getBytes(StandardCharsets.UTF_8));
+        return hash.digest();
+    }
+
+    public static byte[] converterSHA256(InputStream is) throws NoSuchAlgorithmException {
+        final int BUFFER_SIZE = 1024 * 1024;
+        Objects.requireNonNull(is);
+
+        try {
+            final byte[] buffer = new byte[BUFFER_SIZE];
+            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+            int bytesRead;
+            while ((bytesRead = is.read(buffer)) != -1) {
+                digest.update(buffer, 0, bytesRead);
+            }
+
+            return digest.digest();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 hashing algorithm unknown in this VM.", e);
+        } catch (IOException e) {
+            throw new IllegalStateException("file io fail.", e);
         }
     }
 

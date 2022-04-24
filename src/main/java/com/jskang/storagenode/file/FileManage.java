@@ -59,7 +59,7 @@ public class FileManage {
         List<String> positions = new ArrayList<>();
         int size = fileManage.get(fileKey).size();
         for (int i=0; i<size; i++) {
-            positions.add(String.valueOf(fileManage.get(fileKey).get(i)));
+            positions.add("upload".concat( String.valueOf(fileManage.get(fileKey).get(i)) ) );
         }
 
         return positions;
@@ -146,6 +146,9 @@ public class FileManage {
             nodeList = (List<Map<String, Object>>) Converter.objToObj(
                 data.get("nodeStatusDaos"), new TypeReference<List<Map<String, Object>>>() {}
             );
+        }
+        if (nodeList == null) {
+            nodeList = new ArrayList<>();
         }
 
         // 자기 자신의 호스트네임 얻어오기

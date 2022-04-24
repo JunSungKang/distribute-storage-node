@@ -3,32 +3,26 @@ package com.jskang.storagenode.file;
 import com.jskang.storagenode.common.CommonValue;
 import com.jskang.storagenode.common.Converter;
 import com.jskang.storagenode.common.SystemInfo;
-import com.jskang.storagenode.common.exception.DataSizeOutBoundException;
 import com.jskang.storagenode.common.exception.DataSizeRangeException;
 import com.jskang.storagenode.node.NodeStatusDao;
 import com.jskang.storagenode.node.NodeStatusDaos;
 import com.jskang.storagenode.response.ResponseResult;
 import com.jskang.storagenode.smartcontract.SmartContract;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,44 +62,46 @@ public class Upload {
                     FilePart filePart = (FilePart) map.get("file");
                     FileManage.addPosition(fileName, filePart.filename());
                     Path path = Paths.get(CommonValue.UPLOAD_PATH, filePart.filename());
-
-                    try {
-                        // 파일명
-                        List<Bytes32> fileNames = fileNamesMap.get(fileName+ "-filename");
-                        if (fileNames == null) {
-                            fileNames = new ArrayList<>();
-                        }
-                        fileNames.add(
-                            Converter.stringToBytes32(filePart.filename())
-                        );
-                        fileNamesMap.put(fileName+ "-filename", fileNames);
-
-                        // 파일 해시
-                        List<Bytes32> fileHashs = fileHashsMap.get(fileName+ "-filehash");
-                        if (fileHashs == null) {
-                            fileHashs = new ArrayList<>();
-                        }
-                        MessageDigest hash = MessageDigest.getInstance(CommonValue.HASH_ALGORITHM_SHA256);
-                        hash.update(filePart.filename().getBytes(StandardCharsets.UTF_8));
-                        fileHashs.add(
-                            new Bytes32(hash.digest())
-                        );
-                        fileHashsMap.put(fileName+ "-filehash", fileHashs);
-                    } catch (NoSuchAlgorithmException e) {
-                        LOG.error(CommonValue.HASH_ALGORITHM_SHA256+ " hash change fail.");
-                        LOG.debug(e.getMessage());
-                    } catch (DataSizeRangeException e) {
-                        LOG.error("need filename length size == 32");
-                        LOG.debug(e.getMessage());
-                    }
-                    return filePart
-                        .transferTo(path)
-                        .doOnError(throwable -> ResponseResult.fail(HttpStatus.INTERNAL_SERVER_ERROR))
-                        .doOnSuccess(unused -> ResponseResult.success(""));
+                    return filePart.transferTo(path)
+                        .then(Mono.just(filePart.filename()));
+                } else {
+                    return ResponseResult.fail(HttpStatus.BAD_REQUEST);
                 }
-                return ResponseResult.fail(HttpStatus.INTERNAL_SERVER_ERROR);
             })
-            .doOnSuccess(o -> {
+            .doOnSuccess(serverResponse -> {
+                String distributeFileName = serverResponse.toString();
+                try {
+                    // 파일명
+                    List<Bytes32> fileNames = fileNamesMap.get(fileName+ "-filename");
+                    if (fileNames == null) {
+                        fileNames = new ArrayList<>();
+                    }
+                    fileNames.add(
+                        Converter.stringToBytes32(distributeFileName)
+                    );
+                    fileNamesMap.put(fileName+ "-filename", fileNames);
+
+                    // 파일 해시
+                    List<Bytes32> fileHashs = fileHashsMap.get(fileName+ "-filehash");
+                    if (fileHashs == null) {
+                        fileHashs = new ArrayList<>();
+                    }
+
+                    InputStream is = Files.newInputStream(Paths.get(CommonValue.UPLOAD_PATH, distributeFileName));
+                    byte[] fileHash = Converter.converterSHA256(is);
+                    fileHashs.add(new Bytes32(fileHash));
+                    fileHashsMap.put(fileName+ "-filehash", fileHashs);
+                } catch (NoSuchAlgorithmException e) {
+                    LOG.error(CommonValue.HASH_ALGORITHM_SHA256+ " hash change fail.");
+                    LOG.debug(e.getMessage());
+                } catch (DataSizeRangeException e) {
+                    LOG.error("need filename length size == 32.");
+                    LOG.debug(e.getMessage());
+                } catch (IOException e) {
+                    LOG.error("file get newInputStream fail.");
+                    LOG.debug(e.getMessage());
+                }
+
                 // File Upload after, FileManage refresh ready.
                 String hostName = this.systemInfo.getHostName();
                 NodeStatusDao nodeStatusDao = new NodeStatusDao(
@@ -133,16 +129,12 @@ public class Upload {
                     LOG.error(e.getMessage());
                 }
                 LOG.info("file upload success.");
-            })
-            .doOnError(throwable -> {
-                LOG.error(throwable.getMessage());
-            })
-            .doFinally(result -> {
+
                 // All file upload after, smart-contract run.
                 List<Bytes32> fileNames = fileNamesMap.get(fileName+ "-filename");
                 List<Bytes32> fileHashs = fileHashsMap.get(fileName+ "-filehash");
 
-                if (result.toString().equals("onComplete") && fileNames.size() == 9 && fileHashs.size() == 9) {
+                if (fileNames.size() == 9 && fileHashs.size() == 9) {
                     // File smartcontract generate.
                     SmartContract smartContract = new SmartContract();
                     boolean isCheck = smartContract.connection();
@@ -165,9 +157,12 @@ public class Upload {
                             fileNames.parallelStream().collect(Collectors.toList()),
                             fileHashs.parallelStream().collect(Collectors.toList())
                         );
+                        LOG.info("smart-contract generate success.");
+
                         // 완료된 작업 초기화
                         fileNamesMap.remove(fileName+ "-filename");
                         fileHashsMap.remove(fileName+ "-filehash");
+                        LOG.info("Temp file-map remove success.");
                     }
                 }
             })
