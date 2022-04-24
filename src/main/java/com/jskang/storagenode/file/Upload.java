@@ -163,6 +163,7 @@ public class Upload {
                         fileNamesMap.remove(fileName+ "-filename");
                         fileHashsMap.remove(fileName+ "-filehash");
                         LOG.info("Temp file-map remove success.");
+                        LOG.info("File upload complete.");
                     }
                 }
             })
