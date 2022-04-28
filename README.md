@@ -9,4 +9,5 @@
 ## Build
 1. Reed-Solomon jar move <br/>
    `${project.basedir}/lib/JavaReedSolomon.jar`
-2. mvn package
+2. mvn package <br/>
+   ※ Skip the mvn test if you can't do the ethereum testnet.
