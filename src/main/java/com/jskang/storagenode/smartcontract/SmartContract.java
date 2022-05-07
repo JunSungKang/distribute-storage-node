@@ -31,7 +31,7 @@ import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.http.HttpService;
 
-public class SmartContract {
+public class SmartContract implements CommonSmartContract{
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
 
@@ -156,10 +156,10 @@ public class SmartContract {
         Array sourceIp = new DynamicArray(Bytes32.class, fileNames);
         Array fileHash = new DynamicArray(Bytes32.class, fileHashs);
         Function function = new Function("setFileHashValue",
-            Arrays.asList(key, sourceIp, fileHash),
-            Collections.emptyList());
+                                         Arrays.asList(key, sourceIp, fileHash),
+                                         Collections.emptyList());
 
-        // 3. Account lock 해제
+        // 2. Account lock 해제
         try {
             boolean unlockAccount = this.unlockAccount(address, password);
             if (!unlockAccount) {
@@ -169,17 +169,27 @@ public class SmartContract {
         } catch (IOException e) {
             LOG.error("UnlockAccount Fail.");
             LOG.debug(e.getMessage());
+            return;
+        } catch (Exception e) {
+            LOG.error("UnlockAccount Fail.");
+            LOG.debug(e.getMessage());
+            return;
         }
 
         //4. account에 대한 nonce값 가져오기.
         Web3j web3j = this.getWeb3j();
         EthGetTransactionCount ethGetTransactionCount = null;
         try {
-            ethGetTransactionCount = web3j.ethGetTransactionCount(address, DefaultBlockParameterName.LATEST).sendAsync().get();
+            ethGetTransactionCount = web3j.ethGetTransactionCount(
+                address, DefaultBlockParameterName.LATEST
+            ).sendAsync().get();
         } catch (InterruptedException e) {
             LOG.error("Get nonce value fail. (Interrupted)");
             LOG.debug(e.getMessage());
         } catch (ExecutionException e) {
+            LOG.error("Get nonce value fail. (Execution)");
+            LOG.debug(e.getMessage());
+        } catch (Exception e) {
             LOG.error("Get nonce value fail. (Execution)");
             LOG.debug(e.getMessage());
         }
@@ -194,9 +204,14 @@ public class SmartContract {
 
         // 6. ethereum Call
         try {
-            EthSendTransaction ethSendTransaction = web3j.ethSendTransaction(transaction).send();
+            EthSendTransaction ethSendTransaction
+                = web3j.ethSendTransaction(transaction)
+                .send();
             LOG.debug(ethSendTransaction.getResult());
         } catch (IOException e) {
+            LOG.error("ETH Transaction fail.");
+            LOG.debug(e.getMessage());
+        } catch (Exception e) {
             LOG.error("ETH Transaction fail.");
             LOG.debug(e.getMessage());
         }

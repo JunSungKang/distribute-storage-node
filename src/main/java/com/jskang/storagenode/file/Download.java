@@ -4,8 +4,11 @@ import com.jskang.storagenode.common.Converter;
 import com.jskang.storagenode.common.SystemInfo;
 import com.jskang.storagenode.node.NodeStatusDao;
 import com.jskang.storagenode.node.NodeStatusDaos;
+import com.jskang.storagenode.reedsolomon.ReedSolomonDecoding;
 import com.jskang.storagenode.response.ResponseResult;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
@@ -42,7 +45,16 @@ public class Download {
                 break;
             }
         }
-        Resource resource = new FileSystemResource(homePath + File.separator + fileName);
+        Resource resource = new FileSystemResource(homePath + File.separator + fileName + File.separator + fileName);
+        try {
+            byte[] data = new ReedSolomonDecoding().execute(resource.getFile().getPath());
+            FileOutputStream fos = new FileOutputStream(resource.getFile());
+            fos.write(data);
+            fos.close();
+        } catch (IOException e) {
+            LOG.error(e.getMessage());
+            return ResponseResult.fail(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
         Mono<Resource> mapper = Mono.just(resource);
 
         return ResponseResult.download(mapper, fileName);

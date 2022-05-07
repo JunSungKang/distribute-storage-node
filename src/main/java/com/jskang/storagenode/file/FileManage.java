@@ -6,9 +6,7 @@ import com.jskang.storagenode.common.SystemInfo;
 import com.jskang.storagenode.node.NodeStatusDaos;
 import com.jskang.storagenode.response.ResponseResult;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,7 +17,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +60,13 @@ public class FileManage {
 
         int size = fileManage.get(fileKey).size();
         for (int i=0; i<size; i++) {
-            positions.add("upload"+File.separator.concat( String.valueOf(fileManage.get(fileKey).get(i)) ) );
+            positions.add(
+                "upload"
+                    .concat(File.separator)
+                    .concat(fileKey)
+                    .concat(File.separator)
+                    .concat(fileManage.get(fileKey).get(i))
+            );
         }
 
         return positions;
@@ -130,7 +133,7 @@ public class FileManage {
     }
 
     public static int loadFileManager() {
-        LOG.info("FileManager.fm read.");
+        LOG.info("FileManager.fm read ready.");
 
         Map<String, Object> data = new HashMap<>();
         File file = Paths.get("data", "FileManage.fm").toFile();
@@ -181,7 +184,7 @@ public class FileManage {
      * @return
      */
     public static NodeStatusDaos readFileManager() {
-        LOG.info("FileManager.fm read.");
+        LOG.debug("FileManager.fm read.");
 
         File file = Paths.get("data", "FileManage.fm").toFile();
         return (NodeStatusDaos)Converter.fileToObj(file, new TypeReference<NodeStatusDaos>() {});

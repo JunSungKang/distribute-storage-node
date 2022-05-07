@@ -13,7 +13,7 @@ public class ReedSolomonDecoding implements ReedSolomonCommon {
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
 
     public byte[] execute(String fileName) throws IOException {
-        LOG.info("Create distribute file start.");
+        LOG.info("Create distribute file merge start: " +fileName);
 
         // Read in any of the shards that are present.
         // (There should be checking here to make sure the input
@@ -32,7 +32,7 @@ public class ReedSolomonDecoding implements ReedSolomonCommon {
                 FileInputStream in = new FileInputStream(shardFile);
                 in.read(shards[i], 0, shardSize);
                 in.close();
-                LOG.info("Distribute file read " + shardFile);
+                LOG.debug("Distribute file read " + shardFile);
             }
         }
 

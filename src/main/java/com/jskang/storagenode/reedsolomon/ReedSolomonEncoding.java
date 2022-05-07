@@ -21,7 +21,7 @@ public class ReedSolomonEncoding implements ReedSolomonCommon {
     }
 
     public List<String> execute(String fileName) throws IOException {
-        LOG.info("Create distribute file start.");
+        LOG.info("Create distribute file split start: " +fileName);
 
         // Get the size of the input file.  (Files bigger that
         // Integer.MAX_VALUE will fail here!)
@@ -59,7 +59,7 @@ public class ReedSolomonEncoding implements ReedSolomonCommon {
             out.write(shards[i]);
             out.close();
             outputFiles.add(outputFile.getAbsolutePath());
-            LOG.info("Create distribute file: " + outputFile);
+            LOG.debug("Create distribute file: " + outputFile);
         }
         LOG.info("Create distribute file completed.");
 
