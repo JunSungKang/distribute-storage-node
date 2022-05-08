@@ -2,6 +2,7 @@ package com.jskang.storagenode.file;
 
 
 import com.jskang.storagenode.common.exception.DataSizeRangeException;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -40,5 +41,12 @@ class FileDamageCheckerTest {
 
         System.out.println(new String(bytes)+ " == " +new String(bytes32.getValue()));
         Assertions.assertEquals(new String(bytes), new String(bytes32.getValue()));
+    }
+
+    @Test
+    void urlDecoder() {
+        String fileName = "%EA%B0%95%EC%A4%80%EC%84%B1-stay.mp3";
+        fileName = URLDecoder.decode(fileName, StandardCharsets.UTF_8);
+        Assertions.assertEquals(fileName, "강준성-stay.mp3");
     }
 }

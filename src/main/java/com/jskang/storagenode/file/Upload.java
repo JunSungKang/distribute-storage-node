@@ -127,20 +127,17 @@ public class Upload {
 								}
 								LOG.debug("file upload success.");
 							} catch (NoSuchAlgorithmException e) {
-								LOG.error(CommonValue.HASH_ALGORITHM_SHA256 + " hash change fail.");
-								LOG.debug(e.getMessage());
+								LOG.error(e.getMessage());
 								responseResult.set(
 									ResponseResult.fail(HttpStatus.BAD_REQUEST, CommonValue.HASH_ALGORITHM_SHA256 + " hash change fail.")
 								);
 							} catch (DataSizeRangeException e) {
-								LOG.error("need filename length size == 32.");
-								LOG.debug(e.getMessage());
+								LOG.error(e.getMessage());
 								responseResult.set(
 									ResponseResult.fail(HttpStatus.BAD_REQUEST, "need filename length size == 32.")
 								);
 							} catch (IOException e) {
-								LOG.error("file get newInputStream fail.");
-								LOG.debug(e.getMessage());
+								LOG.error(e.getMessage());
 								responseResult.set(
 									ResponseResult.fail(HttpStatus.BAD_REQUEST, "file get newInputStream fail.")
 								);

@@ -31,6 +31,9 @@ public class FileDamageChecker {
      */
     public Mono<ServerResponse> damageCheck(ServerRequest request, String key) {
         String fileName = Converter.getQueryParam(request, key);
+        if (fileName.isBlank()) {
+            return ResponseResult.fail(HttpStatus.BAD_REQUEST);
+        }
 
         List<Integer> damageFileIdx = new ArrayList<>();
         SmartContract contract = new SmartContract();

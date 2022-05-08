@@ -7,6 +7,7 @@ import com.jskang.storagenode.common.exception.DataSizeRangeException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -103,7 +104,7 @@ public class Converter {
 
     public static Bytes32 stringToBytes32(String str) throws DataSizeRangeException {
         if (str.length() > 32) {
-            throw new DataSizeRangeException();
+            throw new DataSizeRangeException(str);
         }
 
         byte[] bytes = new byte[32];
@@ -132,7 +133,7 @@ public class Converter {
     public static String getQueryParam(ServerRequest request, String key) {
         Optional<String> param = request.queryParam(key);
         if (param.isPresent()) {
-            return param.get();
+            return URLDecoder.decode(param.get(), StandardCharsets.UTF_8);
         }
         return "";
     }
